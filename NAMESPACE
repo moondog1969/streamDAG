@@ -1,9 +1,0 @@
-# Export all names
-exportPattern(.)
-
-# Packages listed as Imports or Depends
-importFrom(asbio, kurt, skew)
-importFrom(graphics, points, legend, par, rect, grid, arrows)
-importFrom(stats, rbeta, var, cor, integrate, dist, as.dist)
-importFrom(plotrix, thigmophobe.labels)
-import(igraph)
