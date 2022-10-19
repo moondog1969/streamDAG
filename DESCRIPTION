@@ -1,6 +1,6 @@
 Package: streamDAG
-Version: 1.2-1
-Date: 2022-9-1
+Version: 1.2-3
+Date: 2022-10-7
 Title: Descriptors and Methods for Stream DAGs 
 Author: Ken Aho [aut, cre], Arya Legg [ctb]
 Maintainer: Ken Aho <kenaho1@gmail.com>
