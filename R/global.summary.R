@@ -22,7 +22,7 @@ global.summary <- function(G, sink, inf.paths = FALSE){
   GA <- I.D(G, mode = "GA")
   harm <- I.D(G, mode = "harm")
   Harary <- harary(G)
-  Centralization <- centr_degree(G, normalized = FALSE)$centralization
+  Centralization <- centr_degree(G, normalized = TRUE)$centralization
   a.in.out <- assort(G, mode = "in.out")
   a.in.in <- assort(G, mode = "in.in")
   Strahler.number <- max(stream.order(G, sink = sink, method = "strahler")) 
