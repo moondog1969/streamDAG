@@ -1,5 +1,5 @@
 Package: streamDAG
-Version: 1.4-1
+Version: 1.4
 Date: 2023-5-30
 Title: Analytical Methods for Stream DAGs 
 Author: Ken Aho [aut, cre], Rob Ramos [ctb], Arya Legg [ctb], Rebecca L. Hale [ctb], Charles T. Bond [ctb]
