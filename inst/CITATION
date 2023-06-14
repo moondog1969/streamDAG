@@ -1,0 +1,16 @@
+bibentry(
+     bibtype = "Manual",
+     title = "streamDAG: Analytical Methods for Stream DAGs",
+     author = c(
+       person("Ken", "Aho", role = c("aut", "cre"), email = "ahoken@isu.edu"),
+       person("Rob", "Ramos", role = "dtc"),
+       person("Arya", "Legg", role = c("dtc", "ctb")),
+       person(c("Rebecca","L."), "Legg", role = "dtc"),
+       person(c("Charles","T."), "Bond", role = "dtc")
+       ),
+     year = "2023",
+     note = "R package version 1.4",
+     url = "https://github.com/moondog1969/streamDAG",
+     key = "streamDAG-package"
+)
+
