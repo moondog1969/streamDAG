@@ -5,7 +5,7 @@
 Nodal coordinates for graphs in the AIMS project 
 }
 \description{
-Contains spatial coordinates for graph nodes for stream networks in the AIMS project 
+Contains spatial coordinates for graph nodes for stream networks in the Aquatic Intermittency effects on Microbiomes in Streams (AIMS) project 
 }
 \usage{data("AIMS.node.coords")}
 \format{
