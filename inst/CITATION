@@ -25,5 +25,5 @@ bibentry(
   volume="167",
   pages="105775",
   year="2023",
-  textVersion="Aho, K., Kriloff, C., Godsey, S. E., Ramos, R. Wheeler, C., You, Y., Warix, S., Derryberry, D., Zipper, S., Hale, R. L., Bond, C. T., Kuehn, K. A.  2023. Non-perennial stream networks as directed acyclic graphs: The R-package streamDAG.  Environmental Modelling and Software. doi: 10.1016/j.envsoft.2023.105775"
+  textVersion="Aho, K., Kriloff, C., Godsey, S. E., Ramos, R. Wheeler, C., You, Y., Warix, S., Derryberry, D., Zipper, S., Hale, R. L., Bond, C. T., Kuehn, K. A.  (2023). Non-perennial stream networks as directed acyclic graphs: The R-package streamDAG.  Environmental Modelling and Software. doi: 10.1016/j.envsoft.2023.105775"
 )
