@@ -1,6 +1,6 @@
 Package: streamDAG
 Version: 1.4-5
-Date: 2023-8-16
+Date: 2023-8-18
 Title: Analytical Methods for Stream DAGs 
 Maintainer: Ken Aho <ahoken@isu.edu>
 Authors@R: c(person("Ken", "Aho", role = c("aut", "cre"), email = "ahoken@isu.edu"), person("Arya", "Legg", role = c("dtc", "ctb")), person("Rob", "Ramos", role = "dtc"), person("Maggi", "Kraft", role = "dtc"), person(c("Charles","T."), "Bond", role = "dtc"), person(c("Rebecca","L."), "Hale", role = "dtc"))
