@@ -1,0 +1,29 @@
+citHeader("For citations of package itself and publication describing package, respectively:")
+
+bibentry(
+     bibtype = "Manual",
+     title = "streamDAG: Analytical Methods for Stream DAGs",
+     author = c(
+       person("Ken", "Aho", role = c("aut", "cre"), email = "ahoken@isu.edu"),
+       person("Rob", "Ramos", role = "dtc"),
+       person("Arya", "Legg", role = c("dtc", "ctb")),
+       person(c("Rebecca","L."), "Hale", role = "dtc"),
+       person("Maggi", "Kraft", role = "dtc"),
+       person(c("Charles","T."), "Bond", role = "dtc")
+       ),
+     year = "2023",
+     note = "R package version 1.4-5",
+     url = "https://github.com/moondog1969/streamDAG",
+     key = "streamDAG-package"
+)
+
+bibentry(
+     bibtype = "Article",
+     title="Non-perennial stream networks as directed acyclic graphs: The R-package streamDAG",
+  author="Aho, Ken and Kriloff, Cathy and Godsey, Sarah E and Ramos, Rob and Wheeler, Chris and You, Yaqi and Warix, Sara and Derryberry, DeWayne and Zipper, Sam and Hale, Rebecca L and others",
+  journal="Environmental Modelling and Software",
+  volume="167",
+  pages="105775",
+  year="2023",
+  textVersion="Aho, K., Kriloff, C., Godsey, S. E., Ramos, R. Wheeler, C., You, Y., Warix, S., Derryberry, D., Zipper, S., Hale, R. L., Bond, C. T., Kuehn, K. A. (2023). Non-perennial stream networks as directed acyclic graphs: The R-package streamDAG.  Environmental Modelling and Software. doi: 10.1016/j.envsoft.2023.105775"
+)
