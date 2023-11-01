@@ -63,7 +63,7 @@ else if (graph == "gj_synoptic_2023") {
 }
 
   else if (graph == "jd_piezo_full") {
-    out <- graph_from_literal("JPZ07" --+"JD5" --+"JPZ06" --+"JD6" --+"JD7" --+"JPZ05" --+"C1", "JD10" --+"JD9" --+"JD8" --+"C1" --+"JD11" --+ "JD12" --+"JD13" --+"C2" --+"JD16" --+"JPZ03" --+"JD17" --+"JD18" --+"JD19" --+"JD20" --+"JD4" --+"JD3" --+"JPZ02" --+"JD2" --+"JD1" --+"JPZ01", "JD15" --+"JPZ04" --+"JD14" --+"C2")
+    out <- graph_from_literal("JPZ07" --+"JD5" --+"JPZ06" --+"JD6" --+"JD7" --+"JPZ05" --+"C1", "JD10" --+"JD9" --+"JD8" --+"C1" --+"JD11" --+ "JD12" --+"JD13" --+"C2" --+"JD16" --+"JPZ03" --+"JD17" --+"JD18" --+"JD19" --+"JD20" --+"JD4" --+"JD3" --+"JPZ02" --+"JD2" --+"JD1" --+"JSS01", "JD15" --+"JPZ04" --+"JD14" --+"C2")
   }
   
   else if (graph == "jd_full") {
