@@ -11,4 +11,5 @@ Suggests: ggplot2, sf, knitr, rmarkdown, bookdown, RColorBrewer, devtools, ggrep
 Description: Provides indices and tools for directed acyclic graphs (DAGs), particularly DAG representations of intermittent streams.  A detailed introduction to the package can be found in the publication: "Non-perennial stream networks as directed acyclic graphs: The R-package streamDAG" (Aho et al., 2023) <doi:10.1016/j.envsoft.2023.105775>, and in the introductory package vignette.
 License: GPL (>= 2)
 LazyLoad: yes
+URL: https://github.com/moondog1969/streamDAG
 
