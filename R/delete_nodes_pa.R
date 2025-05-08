@@ -9,12 +9,13 @@ delete.nodes.pa <- function(G, pa, na.response = "none"){
   if(is.matrix(pa)){pa <- data.frame(pa)}
   if(!is.null(names(pa))){
     pa.nodes <- names(pa)
-      if(any(pa.nodes !=  g.nodes)){
-      warning("Node names in G and pa do not match.")}
+    if(!setequal(pa.nodes, g.nodes)){
+      warning("Node names in G and pa do not match.")
+    }
   }
   w <- which(pa == 0)
   nodes <- g.nodes[w]
-  d <- delete.vertices(G, nodes)
+  d <- delete_vertices(G, nodes)
   if(length(NAs) > 0) d$NA.vertices <- attributes(V(G))$names[NAs]
   d
 }
