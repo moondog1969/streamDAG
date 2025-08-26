@@ -446,7 +446,7 @@ for(i in 1:nrow(subset)){
   w <- which(namelv %in% a)
   length.sub <- mur_lengths[,2][w]
   icsl[i] <- ICSL(temp.graph, lengths = length.sub)
-  E(temp.graph)$weights <- length.sub
+  E(temp.graph)$weight <- length.sub
   intact.to.sink[i] <- size.intact.to.sink(temp.graph, "OUT")
   a.cent[i] <- mean(alpha.centrality(temp.graph), na.rm = T)
   harary[i] <- harary(temp.graph)
