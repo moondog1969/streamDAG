@@ -10,20 +10,13 @@ Makes a spatial plot of a igraph object or stream shapefile, given nodal coordin
 }
 \usage{
 
-spatial.plot(G, x, y, names = NULL, 
-                         plot = TRUE,
-                         col = "lightblue", 
-                         cex.text = .4, cex = 1,
-                         arrow.col = "lightblue", arrow.lwd = 1, 
-                         plot.bg = "white", pch = 21, 
-                         pt.bg = "orange", grid.lwd = 2, 
-                         plot.dry = FALSE,
-                         col.dry = gray(.7),
-                         cex.dry = 1, pch.dry = 19, 
-                         arrow.col.dry = gray(.7), arrow.lwd.dry = 1,
-                         cnw = NULL, xlim = NULL, ylim = NULL, 
-                         arrow.warn = TRUE, ...)
-
+spatial.plot(G, x, y, names = NULL, plot = TRUE, col = "lightblue", 
+                 cex.text = 0.4, cex = 1, arrow.col = "lightblue", arrow.lwd = 1, 
+                 plot.bg = "white", pch = 21, pt.bg = "orange", grid = FALSE, 
+                 grid.col = "white", grid.lwd = 2, plot.dry = FALSE, col.dry = gray(0.7), 
+                 cex.dry = 1, pch.dry = 19, arrow.col.dry = gray(0.7), arrow.lwd.dry = 1, 
+                 cnw = NULL, xlim = NULL, ylim = NULL, arrow.warn = TRUE, angle = 30, 
+                 node.over.arrow = FALSE, ...) 
 
 spatial.plot.sf(x, y, names, shapefile = NULL, cex = 1, arrow.col = "lightblue", 
                 arrow.lwd = 1, pch = 21, pt.bg = "orange")
@@ -77,13 +70,20 @@ Plotting character.
   \item{pt.bg}{
 Background color for plotting character.
 }
+  \item{grid}{
+Logical. Should grid be overlain?
+}
+
+  \item{grid.col}{
+Color of grid.
+}
+
   \item{grid.lwd}{
 Grid line width; \code{grid.lwd = 0} suppresses grid.
 }
   \item{plot.dry}{
 Logical.  Should ``dry'' nodes, i.e., nodes in \code{names} (and \code{x} and \code{y}) that are not also in \code{G} be plotted?  
 }
-
   \item{col.dry}{
 Color of ``dry'' nodes in plot.     
 }
@@ -109,7 +109,12 @@ A numeric vector of length 2, giving the lower and upper \emph{y}-axis limits.
 A numeric vector of length 2, giving the lower and upper \emph{x}-axis limits. 
 }
 
-  \item{arrow.warn}{Logical.  The function \code{\link{arrows}} omits arrowheads (with a warning) for any arrow of length less than 1/1000 inch. To elimiate this warning (which may occur for nearby nodes) specify \code{arrow.warn = FALSE}. 
+  \item{arrow.warn}{Logical. The function \code{\link{arrows}} omits arrowheads (with a warning) for any arrow of length less than 1/1000 inch. To elimiate this warning (which may occur for nearby nodes) specify \code{arrow.warn = FALSE}. 
+}
+  \item{angle}{Angle in directional arrowhead for stream arcs. Refers to \code{angle} argument from the function \code{\link{arrows}}. Thus, is \code{angle = 0}, straight lines are created without arrowheads. 
+}
+
+  \item{node.over.arrow}{Logical. Should the nodes be overlain on arc arrowheads, or vice versa? 
 }
   \item{\dots}{
 Other arguments to \code{\link{plot}}
@@ -171,15 +176,11 @@ spatial.plot(G1, x, y, names, plot.dry = TRUE, cnw = entire)
 
 #-- Animation: drying of Johnson Draw drainage --#
 \donttest{
-jd_graph <- streamDAGs("jd_full")
-data(AIMS.node.coords)
-jd_coords <- AIMS.node.coords[AIMS.node.coords$site == "JD",]
-jd_coords <- jd_coords[jd_coords$STIC_inferred_PA,] 
-data(jd_node_pres_abs)
 
-# Drop 2023 sites 
-jd_pa <- jd_node_pres_abs[,-c( 22, 23, 24, 25, 26, 27, 
-28, 31, 32, 33, 34, 35, 36, 37)]
+jdList <- get.AIMS.data(graph = "jd_full")
+jd_graph <- jdList$graph
+jd_coords <- jdList$coords
+jd_pa <- jdList$node.pa
 
 pb = txtProgressBar(min = 1, max = 250, initial = 1, style = 3) 
 times <- round(seq(1,50322, length = 250),0)
@@ -195,7 +196,7 @@ for(i in 1:250){
                names = jd_coords[,1], 
                ylim = c(43.122, 43.129), 
                xlim = c(-116.8, -116.775), 
-               plot.dry = TRUE, main = jd_node_pres_abs[,1][times[i]], 
+               plot.dry = FALSE, main = jd_pa[,1][times[i]], 
                xlab = "Longitude", ylab = "Latitude")
   dev.hold()
   Sys.sleep(.05)

@@ -1,4 +1,4 @@
-global.summary <- function(G, which = "all", sink, mode = "in", inf.paths = FALSE){
+global.summary <- function(G, which = "all", sink, mode = "in", inf.paths = FALSE, ...){
   if(length(V(G)$name) == 0) crit <- TRUE else crit <- FALSE
   if(crit) names <- NA else names <- attributes(V(G))$name
   
@@ -76,7 +76,7 @@ global.summary <- function(G, which = "all", sink, mode = "in", inf.paths = FALS
     
     if(which == "all"| which == "avg.alpha.cent"){ 
       if(crit){out <- mean.a.centrality <- NaN} else{ 
-        out <- mean.a.centrality <- mean(alpha_centrality(G))}}
+        out <- mean.a.centrality <- mean(alpha_centrality(G, ...))}}
     
     if(which == "all"| which == "shreve.num"){ 
       if(crit){out <- shreve.num <- 0} else{ 

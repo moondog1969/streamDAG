@@ -8,7 +8,7 @@ Global Summary
 This function calculates useful DAG global summaries including size, diameter, number of paths to sink, mean path length, mean alpha centrality, mean PageRank centrality, graph centralization, Strahler order, Shreve order, the Randic index, the first Zagreb Index, the second Zagreb index, atom-bond connectivity, the geometric-arithmatic index, the harmonic index, the Harary index, global efficiency, the assortativity correlation (+, -), and the assortativity correlation (+, +).
 }
 \usage{
-global.summary(G, which = "all", sink, mode = "in", inf.paths = FALSE)}
+global.summary(G, which = "all", sink, mode = "in", inf.paths = FALSE, ...)}
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 
@@ -22,10 +22,12 @@ global.summary(G, which = "all", sink, mode = "in", inf.paths = FALSE)}
 \item{mode}{Type of degree used.  One of \code{"in"} or \code{"out"}.}
 
 \item{inf.paths}{logical, consider infinite paths?}
+
+\item{...}{Other options other for the \emph{igraph} function \code{\link[igraph]{alpha_centrality}}.}
 }
 
 \details{
-Simple global graph measures of complexivity and/or connectivity of a stream DAG include \emph{size}, \emph{diameter}, and number of paths to a sink. The \emph{size} is equal to the number of arcs in the stream network. The \emph{diameter} equals the length of the longest path, i.e., the \emph{height} of the sink, and \emph{in eccentricity} of the sink. The number of paths to the sink is equivalent to the number of nodes from which the sink node is reachable, which will be \eqn{n-1} for a fully active stream. For more information on \eqn{I(D)} metrics see \code{\link{I.D}}.  Links describing other metrics are provided below.
+Simple global graph measures of complexivity and/or connectivity of a stream DAG include \emph{size}, \emph{diameter}, and number of paths to a sink. The \emph{size} is equal to the number of arcs in the stream network. The \emph{diameter} equals the length of the longest path, i.e., the \emph{height} of the sink, and \emph{in eccentricity} of the sink. The number of paths to the sink is equivalent to the number of nodes from which the sink node is reachable, which will be \eqn{n-1} for a fully active stream. For more information on \eqn{I(D)} metrics see \code{\link{I.D}}. Links describing other metrics are provided below.
 }
 
 \references{

@@ -9,20 +9,22 @@ Obtains local (nodal) summaries from a DAG
 }
 \usage{
 
-local.summary(G, metric = "all", mode = "in")
+local.summary(G, metric = "all", mode = "in", alpha = 1, ...)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{G}{
 Graph of class "igraph".  See \code{\link[igraph]{graph_from_literal}}
 }
-\item{metric}{One of \code{"all"}, \code{"alpha.cent"}, \code{"imp.closeness"}, \code{"n.paths"}, \code{"n.nodes"}, \code{"page.rank"}, \code{"path.len.summary"}, \code{"path.deg.summary"}, \code{"size.intact.in"}.  Partial matches allowed. 
+\item{metric}{One of \code{"all"}, \code{"alpha.cent"}, \code{"imp.closeness"}, \code{"n.paths"}, \code{"n.nodes"}, \code{"page.rank"}, \code{"path.len.summary"}, \code{"path.deg.summary"}, \code{"size.intact.in"}.  Partial matches allowed.
 }
-\item{mode}{One of \code{"in"} or \code{"out"}} 
+\item{mode}{One of \code{"in"} or \code{"out"}}
+\item{alpha}{\eqn{\alpha} value for computing alpha centrality.}
+\item{...}{Other options other for the \emph{igraph} function \code{\link[igraph]{alpha_centrality}}.}
 }
 
 \value{
-Nodes are returned with values measuring the indegree, alpha centrality, PageRank centrality, improved closeness centrality, betweenness centrality, upstream network length, and upstream in-path length mean, variance, max (i.e., in-eccentricity), skew, kurtosis, and mean efficiency. 
+Nodes are returned with values measuring the indegree, alpha centrality, PageRank centrality, improved closeness centrality, betweenness centrality, upstream network length, and upstream in-path length mean, variance, max (i.e., in-eccentricity), skew, kurtosis, and mean efficiency.
 %%  ~Describe the value returned
 %%  If it is a LIST, use
 %%  \item{comp1 }{Description of 'comp1'}
@@ -31,20 +33,20 @@ Nodes are returned with values measuring the indegree, alpha centrality, PageRan
 }
 
 \author{
-Ken Aho, Gabor Csardi wrote \code{\link[igraph]{degree}}, \code{\link[igraph]{page_rank}} and \code{\link[igraph]{alpha_centrality}} functions.
+Ken Aho; Gabor Csardi wrote \code{\link[igraph]{degree}}, \code{\link[igraph]{page_rank}} and \code{\link[igraph]{alpha_centrality}} functions.
 }
 
 
 
 \seealso{
-\code{\link[igraph]{degree}}, \code{\link[igraph]{alpha_centrality}}, \code{\link[igraph]{page_rank}}, \code{\link[igraph]{betweenness}}, 
+\code{\link[igraph]{degree}}, \code{\link[igraph]{alpha_centrality}}, \code{\link[igraph]{page_rank}}, \code{\link[igraph]{betweenness}},
 \code{\link{imp.closeness}},
 \code{\link[asbio]{skew}}, \code{\link[asbio]{kurt}}
 }
 
 \examples{
-network_a <- graph_from_literal(a --+ b, c --+ d, d --+ e, b --+ e, 
-e --+ j, j --+ m, f --+ g, g --+ i, h --+ i, i --+ k, k --+ l, 
+network_a <- graph_from_literal(a --+ b, c --+ d, d --+ e, b --+ e,
+e --+ j, j --+ m, f --+ g, g --+ i, h --+ i, i --+ k, k --+ l,
 l --+ m, m --+ n,  n --+ o)
 local.summary(network_a)
 }
