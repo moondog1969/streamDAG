@@ -1,0 +1,24 @@
+\begin{thebibliography}{4}
+\providecommand{\natexlab}[1]{#1}
+
+\bibitem[{Aho \emph{et~al.}(2023)Aho, Kriloff, Godsey, Ramos, Wheeler, You,
+  Warix, Derryberry, Zipper, Hale \emph{et~al.}}]{aho2023}
+Aho, K., Kriloff, C., Godsey, S.E., Ramos, R., Wheeler, C., You, Y., Warix, S.,
+  Derryberry, D., Zipper, S., Hale, R.L. \emph{et~al.} (2023) Non-perennial
+  stream networks as directed acyclic graphs: The r-package streamdag.
+\newblock \emph{Environmental Modelling \& Software}, \textbf{167}, 105775.
+
+\bibitem[{Bonacich \& Lloyd(2001)}]{bonacich2001}
+Bonacich, P. \& Lloyd, P. (2001) Eigenvector-like measures of centrality for
+  asymmetric relations.
+\newblock \emph{Social networks}, \textbf{23}, 191--201.
+
+\bibitem[{Katz(1953)}]{katz}
+Katz, L. (1953) A new status index derived from sociometric analysis.
+\newblock \emph{Psychometrika}, \textbf{18}, 39--43.
+
+\bibitem[{Newman(2018)}]{newman2018}
+Newman, M. (2018) \emph{Networks}.
+\newblock Oxford university press.
+
+\end{thebibliography}

@@ -1,0 +1,45 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Matrix terminology}{2}{subsection.1.1}%
+\contentsline {subsubsection}{Scalar}{2}{section*.2}%
+\contentsline {subsubsection}{Matrix}{2}{section*.3}%
+\contentsline {subsubsection}{Column vector}{3}{section*.4}%
+\contentsline {subsubsection}{Row vector}{3}{section*.5}%
+\contentsline {subsubsection}{Square matrix}{3}{section*.6}%
+\contentsline {subsubsection}{Major diagonal}{3}{section*.7}%
+\contentsline {subsubsection}{Triangular matrix}{3}{section*.8}%
+\contentsline {subsubsection}{Diagonal matrix}{3}{section*.9}%
+\contentsline {subsubsection}{Identity matrix}{4}{section*.10}%
+\contentsline {subsection}{\numberline {1.2}Matrix operations}{4}{subsection.1.2}%
+\contentsline {subsubsection}{Addition and subtraction}{4}{section*.11}%
+\contentsline {subsubsection}{Transpose}{4}{section*.12}%
+\contentsline {subsubsection}{Symmetric matrix}{5}{section*.13}%
+\contentsline {subsubsection}{Multiplication}{5}{section*.14}%
+\contentsline {subsubsection}{Trace}{6}{section*.15}%
+\contentsline {subsubsection}{Determinant}{7}{section*.16}%
+\contentsline {subsubsection}{Adjugate matrix}{8}{section*.17}%
+\contentsline {subsubsection}{Inverse}{9}{section*.18}%
+\contentsline {subsubsection}{Eigenanalysis}{10}{section*.19}%
+\contentsline {subsection}{\numberline {1.3}Graph theory terminology}{12}{subsection.1.3}%
+\contentsline {subsubsection}{Graph}{12}{section*.21}%
+\contentsline {subsubsection}{Undirected \textit {vs} directed graph}{12}{section*.23}%
+\contentsline {subsubsection}{Walk and Path}{13}{section*.25}%
+\contentsline {subsubsection}{Cyclic \textit {vs} acyclic graph}{13}{section*.26}%
+\contentsline {subsubsection}{Strongly connected, weakly connected, and disconnected graph}{14}{section*.28}%
+\contentsline {subsubsection}{Local \textit {vs} Global graph Perspectives}{14}{section*.30}%
+\contentsline {subsubsection}{Degree}{14}{section*.31}%
+\contentsline {subsubsection}{Adjacency matrix}{15}{section*.32}%
+\contentsline {subsubsection}{Stream DAG}{16}{section*.33}%
+\contentsline {subsubsection}{Weighted graph}{16}{section*.34}%
+\contentsline {subsection}{\numberline {1.4}Infinite Series}{17}{subsection.1.4}%
+\contentsline {subsubsection}{Geometric-series}{17}{section*.35}%
+\contentsline {section}{\numberline {2}Alpha centrality}{18}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Motivation and Derivation}{18}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}$\alpha $}{19}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Mechanics of Alpha-centrality}{19}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Introductory Example}{20}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}The Effect of $\alpha $}{22}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}The Effect of Branching}{23}{subsection.2.6}%
+\contentsline {subsection}{\numberline {2.7}The Combined Effect of $\alpha $ \textit {and} Branching}{26}{subsection.2.7}%
+\contentsline {subsection}{\numberline {2.8}Interpreting Alpha-centrality in Stream DAGs}{27}{subsection.2.8}%
+\contentsline {subsubsection}{\numberline {2.8.1}Unweighted DAGs}{27}{subsubsection.2.8.1}%
+\contentsline {subsubsection}{\numberline {2.8.2}Weighted DAGs}{28}{subsubsection.2.8.2}%

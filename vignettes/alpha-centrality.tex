@@ -1,0 +1,1712 @@
+%\VignetteEngine{knitr::knitr}
+%\VignetteEncoding{UTF-8}
+%\VignetteIndexEntry{Alpha-centrality for stream DAGs}
+\documentclass[12pt]{article}\usepackage[]{graphicx}\usepackage[]{xcolor}
+% maxwidth is the original width if it is less than linewidth
+% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlsng}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hldef}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+
+\usepackage{mathtools}
+\usepackage{blkarray, bigstrut} %
+\usepackage{url,graphics,amsmath,times,color}
+\usepackage{graphicx}
+\usepackage{gensymb}
+\usepackage{natbib} % \usepackage{ragged2e}
+\usepackage{amssymb}
+\usepackage{wasysym}
+\usepackage{amscd}
+\usepackage{exercise}
+\usepackage[tableposition=top]{caption}
+\usepackage{ifthen}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage[shortlabels]{enumitem}
+\renewcommand{\ExerciseName}{Example}
+
+\usepackage[colorlinks=false, linkcolor = red]{hyperref}
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
+\definecolor{umber}{rgb}{0.88, 0.55, 0.24}
+
+\setcounter{tocdepth}{3}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+\title{Alpha-centrality in the context of stream DAGs}
+\author{Ken Aho}
+\date{\today}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+This document tries to provide a background concerning the workings of the Katz centrality \citep{katz} and $\alpha$-centrality \citep{bonacich2001} which are essentially identical, and provide the same rank order of centrality measures. Particular emphasis is given to directed acyclic graph representations of stream networks (stream DAGs). The content is intended for a general audience and so background concerning matrix terminology (Section \ref{sec:matterm}), matrix operations (Section \ref{sec:matop}) and graph theory terminology (Section \ref{sec:graphtheory}) is provided. The geometric infinite series, vital for understanding the translation of alpha-centrality to a linear algebra format, is summarized in Section \ref{sec:infinite}.
+
+\subsection{Matrix terminology}
+\label{sec:matterm}
+\subsubsection*{Scalar:}\addcontentsline{toc}{subsubsection}{Scalar}
+An entity that can be represented by a single number. Scalars are generally denoted with lower-case italicized letters. For instance, $x = 3$.
+
+\subsubsection*{Matrix:}\addcontentsline{toc}{subsubsection}{Matrix}
+A rectangular array whose elements are arranged into a table with $i = 1,2,3, \ldots, m$ rows and $j = 1,2,3\ldots, n$ columns. Matrices are generally denoted with capitalized bold letters. The matrix $\boldsymbol{A}$ below has $m = 3$ rows and $n = 3$ columns. That is, $\boldsymbol{A}$ has \textbf{dimension} $(3 \times 3)$.
+
+\[\underset{(3 \times 3)}{\boldsymbol{A}} = \begin{bmatrix}
+4 & 3 & 2 \\
+1 & -3 & 3 \\
+7 & -8 & 2 \\
+\end{bmatrix}
+\]
+
+The term $a_{ij}$ represents the element at the intersection of the $i$th row and the $j$th column. For example, $a_{1,2} = -3$ in $\boldsymbol{A}$.
+
+\subsubsection*{Column vector:}\addcontentsline{toc}{subsubsection}{Column vector}
+\label{sec:vec}
+A matrix made up a single column. Vectors (representing a column or row) are generally denoted with a lower-case bold letter (or number). For example, $\boldsymbol{a}$ is a column vector, and $\boldsymbol{1}$ is a column vector of ones.
+
+\[\begin{aligned}
+\underset{(3 \times 1)}{\boldsymbol{a}} = \begin{bmatrix}
+3  \\
+7  \\
+6  \\
+\end{bmatrix} &, \text{\hspace{0.4in}} &
+\underset{(2 \times 1)}{\boldsymbol{1}} = \begin{bmatrix}
+1  \\
+1  \\
+\end{bmatrix}
+\end{aligned}
+\]
+
+\subsubsection*{Row vector:}\addcontentsline{toc}{subsubsection}{Row vector}
+A matrix made up a single row. For example, $\boldsymbol{b}$ is a row vector.
+
+\[\underset{(1 \times 3)}{\boldsymbol{b}} = \begin{bmatrix}
+3 & 7 & 6  \\
+\end{bmatrix}
+\]
+
+\subsubsection*{Square matrix:}\addcontentsline{toc}{subsubsection}{Square matrix}
+A matrix with the same number of rows and columns. Thus, the matrix $\boldsymbol{A}$ above is a square matrix.
+
+\subsubsection*{Major diagonal:}\addcontentsline{toc}{subsubsection}{Major diagonal}
+Often simply called the \textbf{diagonal}, the entity comprises the $a_{ii}$ elements of a square matrix. For instance, the diagonal of $\boldsymbol{A}$ above is $\{4, -3, 2\}$.
+
+\subsubsection*{Triangular matrix:}\addcontentsline{toc}{subsubsection}{Triangular matrix}
+The tabular triangle of data \textit{below} the diagonal is the \textbf{lower triangle}. The tabular triangle \textit{above} the diagonal is the \textbf{upper triangle}. The matrices $\boldsymbol{L}$ and $\boldsymbol{U}$ below are are the lower and upper triangle matrices of $\boldsymbol{A}$, respectively.
+
+\[
+\begin{aligned}
+\underset{(3 \times 3)}{\boldsymbol{L}} = \begin{bmatrix}
+4 & 0 & 0 \\
+1 & -3 & 0 \\
+7 & -8 & 2 \\
+\end{bmatrix}
+&, \text{\hspace{0.4in}} &
+\underset{(3 \times 3)}{\boldsymbol{U}} = \begin{bmatrix}
+4 & 1 & 7 \\
+0 & -3 & -8 \\
+0 & 0 & 2 \\
+\end{bmatrix}
+\end{aligned}
+\]
+
+\noindent Note that the diagonal is included in both triangular matrices.
+
+\subsubsection*{Diagonal matrix:}\addcontentsline{toc}{subsubsection}{Diagonal matrix}
+A square matrix with only zeroes on off-diagonal elements. The matrix $\boldsymbol{B}$ is a diagonal matrix.
+
+\[\underset{(3 \times 3)}{\boldsymbol{B}} = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & 2 & 0 \\
+0 & 0 & 2 \\
+\end{bmatrix}
+\]
+
+\subsubsection*{Identity matrix:}\addcontentsline{toc}{subsubsection}{Identity matrix}
+\label{sec:id}
+\textbf{} A diagonal matrix with ones on the diagonal. The identity matrix is generally denoted $\boldsymbol{I}$:
+
+\[\underset{(3 \times 3)}{\boldsymbol{I}} = \begin{bmatrix}
+1 & 0 & 0 \\
+0 & 1 & 0 \\
+0 & 0 & 1 \\
+\end{bmatrix}
+\]
+
+The identity matrix is often denoted $\boldsymbol{I}_n$, indicating it has dimensions $n \times n$. Thus, $\boldsymbol{I}_2$ is the $2 \times 2$ identity matrix.
+
+\begin{itemize}
+\item If $\boldsymbol{A}$ is an $n \times n$ matrix, $\boldsymbol{I}_m \cdot \boldsymbol{A} = \boldsymbol{A} \cdot \boldsymbol{I}_n = \boldsymbol{A}$. Thus, $\boldsymbol{I}$ serves as the matrix equivalent of a scalar one.
+\item $I_n \cdot \boldsymbol{I}_n = \boldsymbol{I}_n$.
+\item All rows and columns in $\boldsymbol{I}_n$ are linearly independent.
+\end{itemize}
+
+\subsection{Matrix operations}
+\label{sec:matop}
+\subsubsection*{Addition and subtraction:}\addcontentsline{toc}{subsubsection}{Addition and subtraction}
+The sum or difference of two matrices with the same dimensions is calculated element-wise. That is, if
+
+\[
+\begin{aligned}
+\underset{(3 \times 3)}{\boldsymbol{A}} = \begin{bmatrix}
+4 & 3 & 2 \\
+1 & -3 & 3 \\
+7 & -8 & 2 \\
+\end{bmatrix} & \text{\hspace{0.2in}  and \hspace{0.2in}} &
+\underset{(3 \times 3)}{\boldsymbol{B}} = \begin{bmatrix}
+0 & 1 & 2 \\
+2 & 4 & 6 \\
+-1 & 2 & -2 \\
+\end{bmatrix}
+\end{aligned}
+\]
+
+\[\underset{(3 \times 3)}{\boldsymbol{A} - \boldsymbol{B}} = \begin{bmatrix}
+4 & 2 & 0 \\
+-1 & -7 & -3 \\
+-8 & -10 & 4 \\
+\end{bmatrix}
+\]
+
+To add or subtract a scalar to or from a matrix, one simply performs the arithmetic with every element in the matrix.  For instance, if $x = 2$, then:
+
+\[\underset{(3 \times 3)}{x - \boldsymbol{B}} = \begin{bmatrix}
+2 & 1 & 0 \\
+0 & -2 & -4  \\
+3 & 0 & 4 \\
+\end{bmatrix}
+\]
+
+
+
+\subsubsection*{Transpose:}\addcontentsline{toc}{subsubsection}{Transpose}
+\label{sec:tran}
+The transpose of an $m \times n$ matrix $\boldsymbol{A}$ is the $n \times m$ matrix $\boldsymbol{A^{T}}$ which is results form converting rows into columns, and vice versa.  That is, if
+
+\[
+\begin{aligned}
+\underset{(3 \times 3)}{\boldsymbol{A}} = \begin{bmatrix}
+4 & 3 & 2 \\
+1 & -3 & 3 \\
+7 & -8 & 2 \\
+\end{bmatrix}
+& \text{\hspace{0.2in}  then \hspace{0.2in}} &
+\underset{(3 \times 3)}{\boldsymbol{A^T}} = \begin{bmatrix}
+4 & 1 & 7 \\
+3 & -3 & -8 \\
+3 & 3 & 2 \\
+\end{bmatrix}
+\end{aligned}
+\]
+
+The transpose function in \textbf{R} is \texttt{t()}:
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlkwc{nrow} \hldef{=} \hlnum{3}\hldef{,} \hlkwc{ncol} \hldef{=} \hlnum{3}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{4}\hldef{,}\hlnum{3}\hldef{,}\hlnum{2}\hldef{,}\hlnum{1}\hldef{,}\hlopt{-}\hlnum{3}\hldef{,}\hlnum{3}\hldef{,}\hlnum{7}\hldef{,}\hlopt{-}\hlnum{8}\hldef{,}\hlnum{2}\hldef{),}
+            \hlkwc{byrow} \hldef{= T)}
+\hldef{A}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2] [,3]
+[1,]    4    3    2
+[2,]    1   -3    3
+[3,]    7   -8    2
+\end{verbatim}
+\begin{alltt}
+\hlkwd{t}\hldef{(A)}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2] [,3]
+[1,]    4    1    7
+[2,]    3   -3   -8
+[3,]    2    3    2
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsubsection*{Symmetric matrix:}\addcontentsline{toc}{subsubsection}{Symmetric matrix}
+\label{sec:sym}
+A square matrix in which $\boldsymbol{A} = \boldsymbol{A^T}$, because its upper and lower triangles are ``reflections'' of each other. The matrix $\boldsymbol{A}$ below is symmetric.
+
+\[
+\underset{(3 \times 3)}{\boldsymbol{A}} = \begin{bmatrix}
+4 & 1 & 7 \\
+1 & -3 & -8 \\
+7 & -8 & 2 \\
+\end{bmatrix}
+\]
+
+If $\boldsymbol{A} = - \boldsymbol{A^T}$, then $\boldsymbol{A}$ is a \textbf{skew-symmetric} matrix.
+
+\subsubsection*{Multiplication:}\addcontentsline{toc}{subsubsection}{Multiplication}
+\begin{itemize}
+\item Multiplication of two matrices is defined if the number of columns of the multiplicand (left matrix) is equal to the number of rows in multiplier (right matrix). Thus, while $\underset{(2 \times 3)}{\boldsymbol{A}} \cdot \underset{(3 \times 1)}{\boldsymbol{B}}$ exists,
+$\underset{(3 \times 1)}{\boldsymbol{B}} \cdot \underset{(2 \times 3)}{\boldsymbol{A}}$ does not exist. That is (unlike scalar multiplication), matrix multiplication is not commutative.
+\item If $\boldsymbol{A}$ is an $(m \times n)$ matrix and $\boldsymbol{B}$ is an $(n \times p)$ matrix, then $\boldsymbol{A} \cdot \boldsymbol{B}$ is the $(m \times p)$ matrix\footnote{That is, the number of columns in $\boldsymbol{A} \cdot \boldsymbol{B}$ will equal the number of columns in
+$\boldsymbol{B}$, and the number of rows in $\boldsymbol{A} \cdot \boldsymbol{B}$ will be the number of rows in $\boldsymbol{A}$.} whose entries are given by the \textbf{dot product} (sum of element-wise vector products) of the corresponding row of $\boldsymbol{A}$ and the corresponding column of $\boldsymbol{B}$.
+
+For instance, if
+\[\begin{aligned}
+\underset{(2 \times 2)}{\boldsymbol{A}}=\begin{bmatrix}
+    a & c  \\
+    b & d  \\
+\end{bmatrix}, &\text{\hspace{0.1in}  and \hspace{0.1in}}&
+\underset{(2 \times 2)}{\boldsymbol{B}}=\begin{bmatrix}
+    e & g  \\
+    f & h  \\
+\end{bmatrix}, &\text{\hspace{0.1in}  then \hspace{0.1in}}&
+\underset{(2 \times 2)}{\boldsymbol{A} \cdot \boldsymbol{B}}=\begin{bmatrix}
+    (ae+cf) & (ag+ch)  \\
+    (be+df) & (bg+dh)  \\
+\end{bmatrix}
+\end{aligned}.
+\]
+
+As a numerical example, if
+\[\begin{aligned}
+\underset{(2 \times 2)}{\boldsymbol{A}}=\begin{bmatrix}
+    3 & 1  \\
+    2 & 3  \\
+\end{bmatrix}, &\text{\hspace{0.1in}  and \hspace{0.1in}}&
+\underset{(2 \times 1)}{\boldsymbol{1}}=\begin{bmatrix}
+    1   \\
+    1   \\
+\end{bmatrix}, &\text{\hspace{0.1in}  then \hspace{0.1in}}&
+\underset{(2 \times 1)}{\boldsymbol{A} \cdot \boldsymbol{1}}=\begin{bmatrix}
+    (3 \cdot 1 + 1 \cdot 1)   \\
+    (2 \cdot 1 + 3 \cdot 1)  \\
+\end{bmatrix} &=&
+\begin{bmatrix}
+    4  \\
+    5  \\
+\end{bmatrix}
+\end{aligned}.
+\]
+
+Thus, multiplying an $m \times n$ matrix by an $n \times 1$ column vector of ones, results in an $n \times 1$ column vector of row sums from the first matrix.
+
+To multiply a scalar by a matrix, or multiply a matrix by a scalar, one simply performs the arithmetic to every element in the matrix. That is, \textit{this} operation is commutative.  For instance, if $x = 2$ then:
+
+\[\begin{aligned}
+\underset{(2 \times 2)}{x \cdot \boldsymbol{A}}=\boldsymbol{A} \cdot x=\begin{bmatrix}
+    3 \cdot 2 & 1 \cdot 2  \\
+    2 \cdot 2 & 3 \cdot 2  \\
+\end{bmatrix} &=&
+\begin{bmatrix}
+    6 & 2   \\
+    4 & 6   \\
+\end{bmatrix}
+\end{aligned}.
+\]
+\end{itemize}
+
+The matrix multiply operator in \textbf{R} is \texttt{\%*\%}.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{2}\hldef{,} \hlnum{3}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{1}\hldef{,} \hlnum{2}\hldef{,} \hlnum{3}\hldef{,} \hlnum{4}\hldef{,} \hlnum{5}\hldef{,} \hlnum{6}\hldef{))}
+\hldef{A}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2] [,3]
+[1,]    1    3    5
+[2,]    2    4    6
+\end{verbatim}
+\begin{alltt}
+\hldef{B} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{3}\hldef{,} \hlnum{2}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{2}\hldef{,} \hlnum{1}\hldef{,} \hlopt{-}\hlnum{2}\hldef{,} \hlnum{0}\hldef{,} \hlnum{1}\hldef{,} \hlnum{9}\hldef{))}
+\hldef{B}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2]
+[1,]    2    0
+[2,]    1    1
+[3,]   -2    9
+\end{verbatim}
+\begin{alltt}
+\hldef{AB} \hlkwb{<-} \hldef{A}\hlopt{%*%}\hldef{B}
+\hldef{AB}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2]
+[1,]   -5   48
+[2,]   -4   58
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsubsection*{Trace:}\addcontentsline{toc}{subsubsection}{Trace}
+The trace is simply the sum of the diagonal of a square matrix. For example, if
+
+\[\begin{aligned}
+\underset{(2 \times 2)}{\boldsymbol{A}}=\begin{bmatrix}
+    3 & 1  \\
+    2 & 3  \\
+\end{bmatrix}, &\text{\hspace{0.1in}  then \hspace{0.1in}}&
+tr(\boldsymbol{A})=6
+\end{aligned}
+\]
+
+One can obtain the trace in \textbf{R} using \texttt{sum(diag(A))} where \texttt{A} is a square matrix.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlkwc{nrow} \hldef{=} \hlnum{3}\hldef{,} \hlkwc{ncol} \hldef{=} \hlnum{3}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{4}\hldef{,}\hlnum{3}\hldef{,}\hlnum{2}\hldef{,}\hlnum{1}\hldef{,}\hlopt{-}\hlnum{3}\hldef{,}\hlnum{3}\hldef{,}\hlnum{7}\hldef{,}\hlopt{-}\hlnum{8}\hldef{,}\hlnum{2}\hldef{),}
+            \hlkwc{byrow} \hldef{= T)}
+\hldef{A}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2] [,3]
+[1,]    4    3    2
+[2,]    1   -3    3
+[3,]    7   -8    2
+\end{verbatim}
+\begin{alltt}
+\hldef{trace} \hlkwb{<-} \hlkwd{sum}\hldef{(}\hlkwd{diag}\hldef{(A))}
+\hldef{trace}
+\end{alltt}
+\begin{verbatim}
+[1] 3
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsubsection*{Determinant:}\addcontentsline{toc}{subsubsection}{Determinant}
+A scalar-valued summary function of a square matrix that allows calculation of the inverse of a matrix (see below) and determines if a matrix is invertible (see below).
+
+The determinant of a matrix $\boldsymbol{A}$ is often denoted $\det(\boldsymbol{A})$ or $|\boldsymbol{A}|$. The determinant of a matrix larger than $3 \times 3$ is difficult to compute. Methods like the \href{https://en.wikipedia.org/wiki/Laplace_expansion}[Laplace expansion] allow fairly intuitive procedures for calculating the determinant of larger square matrices. The determinant of a $2 \times 2$ matrix $\boldsymbol{A}$ is
+
+\[\det(\boldsymbol{A}) = \begin{vmatrix}
+a & b \\
+c & d
+\end{vmatrix} = ad - bc
+\]
+
+In the expression above, if $(0, 0)$, $(a,c)$, $(b,d)$, $(a + b, c + d)$ represent the vertices of a parallelogram, then the absolute value of the determinant gives the area of the parallelogram. Thus, the (absolute value) of a determinant can be interpreted as an area/volume summary of a matrix.\\
+
+Additional insights are possible if we consider a matrix as the result of a linear transformation. For example,
+
+\[
+\begin{aligned}
+\underset{(2 \times 2)}{\boldsymbol{A}} = \begin{bmatrix}
+2 & 0 \\
+0 & 2
+\end{bmatrix} & = & 2 \cdot \boldsymbol{I} \end{aligned}
+\]
+
+Multiplying the unit square represented by $\boldsymbol{I}$, by 2, to obtain $\boldsymbol{A}$, increases its sides two-fold and increases its area four-fold. We also note that $\det(\boldsymbol{A}) = 2 \cdot 2 - 0 = 4$. Thus, $\det(\boldsymbol{A})$ represents the scale factor by which areas are transformed by the ``linear map'' represented by $\boldsymbol{A}$.\\
+
+Importantly,
+\begin{itemize}
+\item $\det(\boldsymbol{I}) = 1$.
+\item Multiplying any row in a matrix by a number multiplies the determinant by that number.
+\item $\det(\boldsymbol{A\cdot B}) = \det(\boldsymbol{A}) \cdot \det(\boldsymbol{B})$.
+\item $\det(\boldsymbol{A}) = \det(\boldsymbol{A}^T)$.
+\item In an upper or lower triangular matrix of any size $n \times n$, the determinant is the product of the diagonal.
+\item For any matrix $\boldsymbol{A})$ with two equal rows or columns $\det(\boldsymbol{A}) = 0$, indicating the vectors of $\boldsymbol{A}$ are linearly dependent, and that the matrix is not invertible (see below).
+\end{itemize}
+
+The determinant of a matrix can be calculated in \textbf{R} using the function \texttt{det()}.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{2}\hldef{,}\hlnum{2}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{2}\hldef{,}\hlnum{0}\hldef{,}\hlnum{0}\hldef{,}\hlnum{2}\hldef{),} \hlkwc{byrow} \hldef{= T)}
+\hldef{A}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2]
+[1,]    2    0
+[2,]    0    2
+\end{verbatim}
+\begin{alltt}
+\hlkwd{det}\hldef{(A)}
+\end{alltt}
+\begin{verbatim}
+[1] 4
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsubsection*{Adjugate matrix:}\addcontentsline{toc}{subsubsection}{Adjugate matrix}
+A manipulation of a square matrix that allows calculation of the inverse of matrix (see below). To obtain the adjugate of a square matrix $\boldsymbol{A}$, $adj(\boldsymbol{A})$, we: 1) obtain the \textbf{matrix minors} by finding the determinants of $2 \times 2$ sub-matrices of $\boldsymbol{A}$, and 2) find the matrix of \textbf{cofactors} by changing the sign of adjacent cells in the matrix of minors, and 3) transposing the matrix of cofactors. For a $2 \times 2$ matrix:
+
+\[\boldsymbol{A} = \begin{bmatrix}
+a & b \\
+c & d
+\end{bmatrix}
+\]
+
+\[adj(\boldsymbol{A}) = \begin{bmatrix}
+d & -b \\
+-c & a
+\end{bmatrix}
+\]
+
+The adjugate of a matrix (larger than $2 \times 2$) can be calculated in \textbf{R} using the function\\ \texttt{RConics::adjoint()}.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hldef{(RConics)}
+\hldef{A} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{3}\hldef{,}\hlnum{3}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{5}\hldef{,}\hlnum{7}\hldef{,}\hlnum{6}\hldef{,}\hlnum{1}\hldef{,}\hlnum{5}\hldef{,}\hlnum{4}\hldef{,}\hlnum{1}\hldef{,}\hlnum{3}\hldef{,}\hlnum{2}\hldef{),} \hlkwc{byrow} \hldef{= T)}
+\hldef{A}
+\hlkwd{adjoint}\hldef{(A)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsubsection*{Inverse:}\addcontentsline{toc}{subsubsection}{Inverse}
+An $n \times n$ square matrix $\boldsymbol{A}$ is \textbf{invertible} if a $n \times n$ matrix $\boldsymbol{B}$ exists that allows: $\boldsymbol{A} \cdot \boldsymbol{B} = \boldsymbol{B} \cdot \boldsymbol{A} = \boldsymbol{I}_n$, where $\boldsymbol{I}_n$ is the $n \times n$ identity matrix. The inverse of a matrix $\boldsymbol{A}$ can be defined by its adjugate matrix and determinant. Specifically, if $\boldsymbol{A}$ is invertable:
+
+\begin{equation}
+\boldsymbol{A}^{-1} = \frac{1}{\det(\boldsymbol{A})}adj(\boldsymbol{A})
+\end{equation}
+
+Additionally, If $\boldsymbol{A}$ is invertible:
+\begin{itemize}
+\item $(x \cdot \boldsymbol{A})^{-1} = x^{-1} \cdot \boldsymbol{A}^{-1}$ where $x$ is a non-zero scalar.
+\item $\det(\boldsymbol{A}) \neq 0$.
+\item the number 0 is not an eigenvalue of $\boldsymbol{A}$ (see below).
+\end{itemize}
+
+In addition:
+\begin{itemize}
+\item $\boldsymbol{I}^{-1} = \boldsymbol{I}$
+\end{itemize}
+
+There are a number of ways of computing $\boldsymbol{A}^{-1}$. However, because, of the reliance of the inverse on the determinant and the adjugate matrix, none of them are straightforward for matrices larger than $2 \times 2$.
+
+Consider the simple case where
+
+\[
+\underset{(2 \times 2)}{\boldsymbol{A}} = \begin{bmatrix}
+3 & 2 \\
+-1 & 0
+\end{bmatrix}
+\]
+
+\[\begin{aligned}
+\underset{(2 \times 2)}{\boldsymbol{A}^{-1}} &= \frac{1}{\det(\boldsymbol{A})}adj(\boldsymbol{A})\\
+&= \frac{1}{\det(0-(-2)} \cdot \begin{bmatrix}
+0 & -2 \\
+1 & 3
+\end{bmatrix}\\
+&= \begin{bmatrix}
+0 & -2 \cdot 0.5 \\
+1 \cdot 0.5  & 3 \cdot 0.5
+\end{bmatrix}\\
+&= \begin{bmatrix}
+0 & -1 \\
+0.5  & 1.5
+\end{bmatrix}
+\end{aligned}
+\]
+
+The inverse of a matrix can be calculated in \textbf{R} using the function \texttt{solve()}.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{2}\hldef{,}\hlnum{2}\hldef{,}\hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{3}\hldef{,}\hlopt{-}\hlnum{1}\hldef{,}\hlnum{2}\hldef{,}\hlnum{0}\hldef{))}
+\hlkwd{solve}\hldef{(A)}
+\end{alltt}
+\begin{verbatim}
+     [,1] [,2]
+[1,]  0.0 -1.0
+[2,]  0.5  1.5
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsubsection*{Eigenanalysis:}\addcontentsline{toc}{subsubsection}{Eigenanalysis}
+\label{sec:eig}
+For an $n \times n$ square matrix $\boldsymbol{A}$, with eigenvector, $\boldsymbol{v}$, and  eigenvalue, $\lambda$, we have:
+
+\begin{equation}\boldsymbol{A} \cdot \boldsymbol{v} = \lambda \cdot \boldsymbol{v},
+\label{eq:eig}
+\end{equation}
+
+\noindent There will be $n$ corresponding eigenvalues ($\lambda_1, \lambda_2,\ldots,\lambda_n$) and eigenvectors ($\boldsymbol{v}_1, \boldsymbol{v}_2,\ldots,\boldsymbol{v}_n$) in the matrix decomposition, and the length (number of rows) of each eigenvector will also equal $n$. Spectral decomposition of a matrix through eigenanalysis is often used for the purpose of dimension reduction in approaches like principal components analysis.
+
+Eigenvector generally refers to a \textbf{right eigenvector}. That is, the eigenvector column vector $\boldsymbol{v}$ is placed to the right of $\boldsymbol{A}$ in the multiplication, $\boldsymbol{A} \cdot \boldsymbol{v}$, as defined in Eq.\ref{eq:eig}. The \textbf{left eigenvector} would result from $\boldsymbol{u} \cdot \boldsymbol{A}$, where $\boldsymbol{u}$ is a $1 \times n$ row vector.\\
+
+For a square matrix $\boldsymbol{A}$,
+\begin{itemize}
+\item $\sum_{i = 1}^n\lambda_i = tr(\boldsymbol{A})$
+\item $\prod_{i = 1}^n\lambda_i = \det(\boldsymbol{A})$
+\item The left and right eigenvectors will only be equal for a symmetric matrix.
+% \item If $\boldsymbol{A}$ is a symmetric matrix whose elements are real, and $\boldsymbol{A}$ has only positive eigenvalues, then $\boldsymbol{A}$ is \textbf{positive definite}.
+\end{itemize}
+
+\paragraph*{Example:}
+As a numerical example, let
+\[
+\underset{(2 \times 2)}{\boldsymbol{A}} = \begin{bmatrix}
+1 & -2 \\
+-2 & 1
+\end{bmatrix}
+\]
+
+Rearranging Eq. \ref{eq:eig} we have:
+
+\[\det(\boldsymbol{A} - \lambda \cdot \boldsymbol{I}_n) = 0\]
+
+To solve for $\lambda$ we have:
+
+\[
+\begin{aligned}
+\begin{bmatrix}
+1 & -2 \\
+-2 & 1
+\end{bmatrix}
+-\lambda \cdot
+\begin{bmatrix}
+1 & 0 \\
+0 & 1
+\end{bmatrix} &= 0\\
+\begin{vmatrix}
+1 - \lambda & -2\\
+-2 & 1 - \lambda
+\end{vmatrix} &=0\\
+(1 - \lambda)(1 - \lambda) - 4 &= 0\\
+(\lambda^2 -2\lambda + 1) - 4 &= 0
+\end{aligned}
+\]
+
+We have the quadratic equation: $\lambda^2 - 2\lambda -3$ = 0.\\
+
+
+
+Solving this equation for $\lambda$ (using the quadratic formula), we have the solutions $\lambda_1 = 3$, $\lambda_2 = -1$. These are first two (and in this case, only) eigenvalues.\\
+
+Inserting $\lambda_1$ into Eq.\ref{eq:eig} we obtain the first eigenvector
+\[
+\begin{aligned}
+\boldsymbol{A} \cdot \boldsymbol{v_1} &= \lambda_1 \cdot \boldsymbol{v_1}\\
+\begin{bmatrix}
+1 & -2 \\
+-2 & 1
+\end{bmatrix}\cdot
+\begin{bmatrix}
+x_{1} \\
+y_{1}
+\end{bmatrix} &= 3 \cdot
+\begin{bmatrix}
+x_{1} \\
+y_{1}
+\end{bmatrix}\\
+\begin{bmatrix}
+1 \cdot x_{1} + (-2 \cdot y_{1}) \\
+-2 \cdot x_{1} + (1 \cdot y_{1})
+\end{bmatrix} &=
+\begin{bmatrix}
+3 \cdot x_{1} \\
+3 \cdot y_{1}
+\end{bmatrix}\\
+\end{aligned}
+\]
+
+We have two equations:
+
+\[
+\begin{aligned}
+x_1 - 2y_1 = 3x_1 \\
+-2x_1 - y_1 = 3y_1 \\
+\end{aligned}
+\]
+
+Rearranging, we have:
+
+\[
+\begin{aligned}
+-2x_1 - 2y_1 = 0 \\
+-2x_1 - 2y_1 = 0 \\
+\end{aligned}
+\]
+
+Both equations indicate that $x_1 = -y_1$.  Arbitrarily letting $x_1 = -1$, we have $y_1 = 1$.  The resulting \textit{unstandardized} first eigenvector is $\begin{bmatrix}-1\\1\end{bmatrix}$.
+Eigenanalysis algorithms generally rescale eigenvectors so that their sum of squares = 1 (so they have unit length). The scaling coefficient for the $i$th eigenvector is found using:
+
+				   					\[k_i = \frac{1}{\sqrt{\sum_{i=1}^n \boldsymbol{v}_i^2}}\]
+For our example,
+\[k_1 = \frac{1}{\sqrt{-1^2 + 1^2}} = 0.7071\]
+
+To get our rescaled eigenvector, we multiply $\boldsymbol{v}_1$ by the scalar, $k_1$.  Thus our
+first scaled eigenvector, $\boldsymbol{e}_1$ is: $\begin{bmatrix}-0.7071\\0.7071\end{bmatrix}$.
+To get the second eigenvector, we repeat this process using the second eigenvalue. We find that $\boldsymbol{e}_2 = \begin{bmatrix}-0.7071\\-0.7071\end{bmatrix}$:\\
+
+As with other matrix operations, obtaining eigenvalues and eigenvectors for matrices larger than $3 \times 3$ is exceedingly difficult to do ``by hand''.
+
+Eigenvalues and eigenvectors of a matrix can be obtained in \textbf{R} using the function \texttt{eigen()}. Here are the right-hand eigenvectors
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{2}\hldef{,}\hlnum{2}\hldef{,}\hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}\hlnum{1}\hldef{,}\hlopt{-}\hlnum{2}\hldef{,}\hlopt{-}\hlnum{2}\hldef{,}\hlnum{1}\hldef{))}
+\hlkwd{eigen}\hldef{(A)}
+\end{alltt}
+\begin{verbatim}
+eigen() decomposition
+$values
+[1]  3 -1
+
+$vectors
+           [,1]       [,2]
+[1,] -0.7071068 -0.7071068
+[2,]  0.7071068 -0.7071068
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Here are the left-hand eigenvectors
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{LH.eigen} \hlkwb{<-} \hlkwa{function}\hldef{(}\hlkwc{A}\hldef{)\{}
+  \hlkwd{eigen}\hldef{(}\hlkwd{t}\hldef{(A))}
+\hldef{\}}
+
+\hlkwd{LH.eigen}\hldef{(A)}
+\end{alltt}
+\begin{verbatim}
+eigen() decomposition
+$values
+[1]  3 -1
+
+$vectors
+           [,1]       [,2]
+[1,] -0.7071068 -0.7071068
+[2,]  0.7071068 -0.7071068
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Because (in this case) $\boldsymbol{A}$ is symmetric, the left and right-hand eigenvectors are the same.
+
+\subsection{Graph theory terminology}
+\label{sec:graphtheory}
+The graph theory definitions and descriptions given here generally follow \citet{aho2023}.
+
+\subsubsection*{Graph:}\addcontentsline{toc}{subsubsection}{Graph}
+An ostensibly graphical method of representing systems of potentially connected \textbf{nodes} (also called vertices) (Fig \ref{fig:g1}).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.4\textwidth]{GT1_01.png}
+\caption{A simple graph with two connected nodes.}
+\label{fig:g1}
+\end{figure}
+
+\subsubsection*{Undirected versus Directed Graph:}\addcontentsline{toc}{subsubsection}{Undirected \textit{vs} directed graph}
+With an \textbf{undirected graph} we can assume that communication can occur bidirectionally along connecting lines (generally called \textbf{edges}) between nodes. Conversely, with a \textbf{directed graph} (or \textbf{digraph}), connections between node (generally called \textbf{arcs}) are assumed to be unidirectional (Fig \ref{fig:g2}).
+
+A digraph can formally defined as an ordered pair, $D = (N, A)$ where $N$ is a set of nodes and $A$ is a set of arcs that link the nodes. If $z$ is an arc from node $u$ to node $v$, we denote this as $z = \overrightarrow{uv}$.
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{GT3_2_1.png}
+\caption{An undirected graph versus a directed graph.}
+\label{fig:g2}
+\end{figure}
+
+\subsubsection*{Walk and Path:}\addcontentsline{toc}{subsubsection}{Walk and Path}
+If $W_k$ is a \textbf{walk} of length $k$, from node $n_0$ to node $n_k$, then we have a finite sequence $W_k=(N,A)$ of the form:
+
+\[N=\{n_0,n_1,\ldots,n_k\}\]
+\[A=\{\overrightarrow{n_0,n_1},\overrightarrow{n_1,n_2},\ldots,\overrightarrow{n_{k-1},n_k}\}\]
+
+where $n_i$ and $n_{i+1}$ are adjacent.
+
+A \textbf{path} is a walk in which no nodes appear more than once, except in the case of a cycle (see below). In this case, $n_k$ can equal to $n_0$.
+
+\subsubsection*{Cyclic versus Acyclic:}\addcontentsline{toc}{subsubsection}{Cyclic \textit{vs} acyclic graph}
+A graph \textbf{cycle} occurs when a path among nodes starts and ends at the same node. An acyclic graph will have no cycles (Fig \ref{fig:g3}). The term \textbf{DAG} is often used to indicate a \textbf{directed acyclic graph}.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{acyclic_cyclic1.png}
+\caption{A cyclic graph versus an acyclic graph.}
+\label{fig:g3}
+\end{figure}
+
+\subsubsection*{Strongly Connected, Weakly Connected, and Disconnected:}\addcontentsline{toc}{subsubsection}{Strongly connected, weakly connected, and disconnected graph}
+A digraph will be \textbf{strongly connected} if every node is reachable from every other node, \textbf{weakly connected} if every node is reachable after replacing all oriented arcs with bidirectional links between adjacent nodes, and \textbf{disconnected} if at least two nodes cannot be connected, even after applying bidirectional links (Fig \ref{fig:g4}).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{connect_disc_stream1.png}
+\caption{Strongly connected, weakly connected, and disconnected graphs.}
+\label{fig:g4}
+\end{figure}
+
+\subsubsection*{Local versus Global Graph Perspectives:}\addcontentsline{toc}{subsubsection}{Local \textit{vs} Global graph Perspectives}
+Graph-theoretic approaches for describing graphs can be separated into \textbf{local} measures
+that describe the characteristics of individual nodes or arcs, and \textbf{global} measures that summarize the characteristics of an entire graph.
+
+\subsubsection*{Degree:}\addcontentsline{toc}{subsubsection}{Degree}
+\label{sec:degree}
+The local importance of nodes to the functioning of a network can be assessed with a large number of approaches. The simplest of these is the nodal \textbf{degree}. That is, the number of arcs connected to a node. In a digraph we can distinguish the \textbf{indegree} and \textbf{outdegree} of a node as the number of arcs with that node as head and the number of arcs with that node as tail. Thus, the degree of a node will be the sum of its indegree and outdegree. As an example, in left-hand graph in Fig \ref{fig:g4}, node \textit{b} has degree 4, because indegree + outdegree = 2 + 2 = 4. In the center graph, however, node \textit{b} has degree 2, because indegree + outdegree = 1 + 1 = 2.
+
+\subsubsection*{Adjacency Matrix:}\addcontentsline{toc}{subsubsection}{Adjacency matrix}
+\label{sec:adj}
+Graphs can be represented with an $n \times n$ adjacency matrix, $\boldsymbol{A}$, whose entries, $A_{ij}$ indicate that an arc exists from node $i$ to $j$ with the designation: $A_{ij} = 1$, or that there is no arc from $i$ to $j$, with the designation: $A_{ij} = 0$.
+
+Consider the central (weakly connected) graph in Fig \ref{fig:g4}. Its adjacency matrix is:
+
+\begin{equation*}
+  \underset{(3 \times 3)}{\boldsymbol{A}}=
+  \begin{blockarray}{*{3}{c} l}
+    \begin{block}{*{3}{>{$\footnotesize}c<{$}} l}
+      a & b & c \\
+    \end{block}
+    \begin{block}{[*{3}{c}]>{$\footnotesize}l<{$}}
+      0 & 1 & 0 \bigstrut[t]& a \\
+      0 & 0 & 1 & b\\
+      0 & 0 & 0 & c\\
+    \end{block}
+  \end{blockarray}
+\end{equation*}
+
+In the matrix above, the numbers characterize whether arcs connect nodes or not. Rows indicate the starting location (tail) of an arc, and columns indicate the ending location (head) of an arc. The entry 1 at cell $A_{1,2}$ indicates the presence of the arc $\overrightarrow{ab}$.  Note, however, because the adjacency matrix represents a weakly connected DAG, there is no connecting arc from \textit{b} to \textit{a}. That is, while $\overrightarrow{ab}$ exists, $\overleftarrow{ab}$ does not exist.
+
+Graphs, and their adjacency matrices can be obtained using functions from the \textbf{R} package \textit{igraph}. Here we codify the central graph in Fig \ref{fig:g4} and obtain its adjacency matrix.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hldef{(igraph)}
+
+\hldef{G} \hlkwb{<-} \hlkwd{graph_from_literal}\hldef{(a} \hlopt{--+} \hldef{b} \hlopt{--+} \hldef{c)}
+\hldef{A} \hlkwb{<-} \hlkwd{as_adjacency_matrix}\hldef{(G,} \hlkwc{sparse} \hldef{= F)}
+\hldef{A}
+\end{alltt}
+\begin{verbatim}
+  a b c
+a 0 1 0
+b 0 0 1
+c 0 0 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+The adjacency matrix can be used to describe many useful network characteristics. For
+example, the $i,j$ entry in $\boldsymbol{A}^k$ will give the number of paths in the graph from node $i$ to node $j$, of length $k$.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlopt{%*%} \hldef{A}
+\end{alltt}
+\begin{verbatim}
+  a b c
+a 0 0 1
+b 0 0 0
+c 0 0 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+There is one path of length 2 in the central graph in Fig \ref{fig:g4}. It goes from node $a$ to node $c$.
+
+\subsubsection*{Stream DAGs:}\addcontentsline{toc}{subsubsection}{Stream DAG}
+From \citet{aho2023}
+
+\begin{quote}
+``Streams networks can be represented using graphs, with streams segments as arcs
+bounded by nodes occurring at hydrologically meaningful locations such as sensor sites, network
+confluences or splits, sources, sinks. Because they are strongly driven by hydrological potentials resulting from fixed elevational gradients, graphs that are most appropriate for describing passive stream network characteristics such as transport and discharge, will be both directed (with an orientation from sources to sink) and acyclic.''
+\end{quote}
+
+\subsubsection*{Graph Weights:}\addcontentsline{toc}{subsubsection}{Weighted graph}
+\label{sec:weightg}
+From \citet{aho2023}
+\begin{quote}
+``Nuance and realism can be enhanced in graphs by adding information to nodes and/or arcs in the form of weights. Weighting information particularly relevant to non-perennial stream DAGs includes flow rates, instream lengths, probabilities of aquatic organism dispersal, water quality components including nutrients or sediment, upstream drainage area, and/or probabilities of surface and subsurface water presence.  Weights can be assessed alongside the strictly topological relationships of nodes and arcs when describing DAGs.''
+\end{quote}
+
+Weights can be added to \textit{igraph} graph objects in several ways. First one can add a \texttt{weight} attribute to arcs using the function \texttt{igraph::E()} (for edge). For illustration, consider the central (weakly connected) graph in Fig \ref{fig:g4}, which has two arcs.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{G1} \hlkwb{<-} \hldef{G}
+\hlkwd{E}\hldef{(G1)}\hlopt{$}\hldef{weight} \hlkwb{<-} \hlkwd{c}\hldef{(}\hlnum{0.1}\hldef{,} \hlnum{0.2}\hldef{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+The weights should be assigned in the order that they are listed in the \texttt{E()} output.
+Thus, the first weight, 0.1, will go with $\overrightarrow{ab}$ and the second weight, 0.2, will go with $\overrightarrow{bc}$.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{E}\hldef{(G1)}
+\end{alltt}
+\begin{verbatim}
++ 2/2 edges from c331268 (vertex names):
+[1] a->b b->c
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Second, one can use the function \texttt{set\_edge\_attr()}.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{weights} \hlkwb{<-} \hlkwd{c}\hldef{(}\hlnum{0.1}\hldef{,} \hlnum{0.2}\hldef{)}
+\hldef{G2} \hlkwb{<-} \hlkwd{set_edge_attr}\hldef{(G,} \hlsng{"weight"}\hldef{,} \hlkwc{value} \hldef{=} \hlkwd{as.numeric}\hldef{(weights))}
+\hldef{attr} \hlkwb{<-} \hlsng{"weight"}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Third, many \textit{igraph} functions have an edge weight argument that allows user imputation of weights.\\
+
+We see that the inclusion of weights has altered the adjacency matrix. Specifically, weights are now listed at connecting arc locations (instead of ones).
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{as_adjacency_matrix}\hldef{(G2,} \hlkwc{attr} \hldef{=} \hlsng{"weight"}\hldef{,} \hlkwc{sparse} \hldef{= F)}
+\end{alltt}
+\begin{verbatim}
+  a   b   c
+a 0 0.1 0.0
+b 0 0.0 0.2
+c 0 0.0 0.0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Infinite Series}
+\label{sec:infinite}
+\subsubsection*{Geometric series:}\addcontentsline{toc}{subsubsection}{Geometric-series}
+The following is a \textbf{geometric series}:
+\[\sum_{n=1}^{\infty} ar^{n-1} = a + ar + ar^2 + \cdots\]
+If $|r| < 1$, then the infinite series converges to:
+\[\sum_{n=1}^{\infty} ar^{n-1} = \frac{a}{1 - r}\]
+If $|r| \geq 1$, then the series is divergent.
+
+\section{Alpha centrality}
+\subsection{Motivation and Derivation}
+In a graph theoretic representation (see Section \ref{sec:graphtheory}), \textbf{degree centrality} is simply the degree of a node. \textbf{Eigenvector centrality} refers to the corresponding entry of a node in the principal eigenvector of the graph adjacency matrix. This method extends degree centrality by accounting for a node’s connection to nodes that are themselves important to the network \citep{newman2018}. Eigenvector centrality, however poses a number of problems for stream DAGs \citep{aho2023}.
+
+\begin{enumerate}
+\item First, the adjacency matrix of a DAG will be asymmetric, and will thus possess distinct left- and right-hand eigenvectors.
+\item Second, ``source nodes'', which must have indegree zero, will drive all downstream nodes to also have an eigenvector centrality of zero \citep{newman2018}.
+\end{enumerate}
+
+Alpha centrality and Katz centrality address several of these issues. Alpha centrality can be defined as the infinite series:
+
+\begin{equation}
+\boldsymbol{x}=\sum_{k=0}^{\infty}\left(\alpha^k\boldsymbol{(A^T)}^k\right)\cdot \boldsymbol{1} = \sum_{k=0}^{\infty} (\alpha \boldsymbol{A^T})^k\cdot \boldsymbol{1}
+\label{eq:katz01}
+\end{equation}
+
+where $\boldsymbol{x}$ is a vector of resulting alpha-centralities for each graph node, $\boldsymbol{A^{T}}$ is the transposed $n \times n$ graph adjacency matrix, $\boldsymbol{1}$ is a column vector of ones with $n$ entries, and $\alpha$ is a user-defined scalar.
+
+Expanding Eq \ref{eq:katz01} we have:
+\begin{equation}
+\boldsymbol{x} = \sum_{k = 0}^{\infty} (\alpha \boldsymbol{A^T})^k\cdot \boldsymbol{1} = (\boldsymbol{I} + \alpha\boldsymbol{A^T}+(\alpha\boldsymbol{A^T})^2 + \cdots) \cdot \boldsymbol{1}
+\end{equation}
+
+where $\boldsymbol{I}$ is the $n \times n$ identity matrix. If this sum converges, then, under the geometric series (Section \ref{sec:infinite}), we can use the matrix notation\footnote{\citet{newman2018} and other sources (including \citet{aho2023}, who probably based their definition on \citet{newman2018}), leave out the transpose of $\boldsymbol{A}$. This transpose (for the form of $\boldsymbol{A}$ and $\boldsymbol{1}$ used here) is required, however, to calculate alpha-centrality correctly.}:
+
+\begin{equation}\boldsymbol{x} = \left(\boldsymbol{I} - \alpha\boldsymbol{A^{T}}\right)^{-1} \cdot \boldsymbol{1}
+\label{eq:katz}
+\end{equation}
+
+ % For matrix terminology and operations see Sections \ref{sec:matterm} and \ref{sec:matop}, respectively. Graph theory terms are reviewed in Section \ref{sec:graphtheory}.
+
+Alpha-centrality provides a ``free centrality'' (often termed $\beta$) to all nodes, regardless of their topology. Explicit inclusion of this $\beta$ term in Eq. \ref{eq:katz} results in: $\left(\boldsymbol{I} - \alpha\boldsymbol{A^{T}}\right)^{-1} \cdot \beta\boldsymbol{1}$. For convenience, $\beta$ is generally taken to be 1 \citep{newman2018}, resulting in the simpler form of alpha-centrality shown in Eq. \ref{eq:katz}. The $\alpha$ parameter specifies the balance between eigenvector centrality and the ``free centrality''. As $\alpha$ increases, the ``free centrality'' is de-emphasized compared to eigenvector centrality. \\
+
+\subsection{$\alpha$}
+Calculation of alpha-centrality requires specification of the $\alpha$ scalar in Eq. \ref{eq:katz}. \citet{katz} recommended that $\alpha$ be in (0, 1]. This would allow one to essentially \textit{de-emphasize longer paths} in the network when computing the centrality of nodes (see below). The $\alpha$ term often defaults to 1 in $\alpha$-centrality computational algorithms, including those in \textit{igraph} and \textit{streamDAG}, which wraps the function \texttt{igraph::alpha\_centrality}.\\
+
+As $\alpha \rightarrow 0$, $\alpha \boldsymbol{A^T}$ drops from Eq. \ref{eq:katz}, and all nodes will have an alpha-centrality of one, because $\boldsymbol{I}^{-1} = \boldsymbol{I}$.  When $\alpha$ equals the reciprocal of the of the largest eigenvalue of $\boldsymbol{A}$, non-finite alpha-centrality outcomes will occur \citep{newman2018}.
+% Further, although one will obtain finite values for $\alpha > \max(\lambda)^{-1}$ these results may be untrustworthy \citet{newman2018}.
+As general guidance, one can set $\alpha$ to be slightly less than $\lambda_{max}^{-1}$ to obtain outcomes that are numerically similar to those from conventional eigenvector centrality. Unfortunately, this guidance is not useful for DAGs for the very reason that alpha-centrality was developed in the first place: a useful eigendecomposition will not exist for $\boldsymbol{A}$.\\
+
+Because alpha-centrality equals degree centrality in the limit $\alpha \rightarrow 0$, and equals eigenvector centrality in the limit $\alpha \rightarrow \lambda_{max}^{-1}$, these measures can both be viewed as special cases of alpha-centrality \citep{newman2018}.
+
+\subsection{Mechanics of Alpha-centrality}
+The mechanics of alpha-centrality become evident upon deconstructing Eq. \ref{eq:katz}.
+
+\begin{itemize}
+\item If the underlying graph is unweighted (Section \ref{sec:weightg}), the elements of its adjacency matrix $\boldsymbol{A}$ will be ones if they represent a connecting arc and zero otherwise.
+\item The operation $\alpha \boldsymbol{A^T}$ results in values of $\alpha$ being set for connecting arcs, if we let columns represent the start of the arc and rows represent the end of the arc. The opposite of the conventional interpretation.
+\item The difference $\boldsymbol{I} - \alpha \boldsymbol{A^T}$ results in an $n \times n$ matrix with ones on the diagonal (if there are no self-looping nodes in the graph) and $-\alpha$ at connecting arcs. For a stream DAG, these negative values will now generally occur in the lower triangle.
+\item Let:
+
+\[\boldsymbol{B} = \boldsymbol{I} - \alpha \boldsymbol{A^T}\]
+
+The inverse $\boldsymbol{B}^{-1}$ will also be an $n \times n$ matrix. The rows of $\boldsymbol{B}^{-1}$ represent \textit{paths} associated with a particular node, along with an additional 1 (representing ``free centrality'') on the diagonal. The appearance of ones at existing paths follows from the form of Alpha-centrality given in Eq \ref{eq:katz01}. Specifically, because it tracks the infinite sum of matrix powers, $\boldsymbol{B}^{-1}$, counts the number of walks of any length starting from node represented by $j$th column of $\boldsymbol{B}^{-1}$, and ending at the node represented by the $i$th row, adjusted by the corresponding power of the decay parameter, $\alpha$.
+
+\item The complete operation $\boldsymbol{B}^{-1} \cdot \boldsymbol{1}$ results in a $n \times 1$ column vector comprised of the row sums of $\boldsymbol{B}^{-1}$.
+\end{itemize}
+
+
+
+% \begin{equation}
+% \det(\alpha^{-1}\boldsymbol{I} - \boldsymbol{A}) = 0
+% \label{eq:diverge}
+% \end{equation}
+
+\subsection{Introductory Example}
+Assume that we wish to calculate alpha-centrality for the DAG in Fig \ref{fig:simp1}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{simo_DAG.pdf}
+\caption{Simple unbranched DAG.}
+\label{fig:simp1}
+\end{figure}
+
+\begin{itemize}
+\item We let $\alpha = 1$.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{alpha} \hlkwb{<-} \hlnum{1}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\item Here we codify the graph, and view its adjacency matrix.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{G} \hlkwb{<-} \hlkwd{graph_from_literal}\hldef{(}\hlnum{4} \hlopt{--+} \hlnum{3} \hlopt{--+} \hlnum{2} \hlopt{--+} \hlnum{1}\hldef{)}
+\hldef{A} \hlkwb{<-} \hlkwd{as_adjacency_matrix}\hldef{(G,} \hlkwc{sparse} \hldef{= F)}
+\hldef{A}
+\end{alltt}
+\begin{verbatim}
+  4 3 2 1
+4 0 1 0 0
+3 0 0 1 0
+2 0 0 0 1
+1 0 0 0 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+% \item Here is the inverse of the first eigenvalue of the adjacency matrix, $\lambda_1^{-1}$. Values slightly less than $\lambda_1^{-1}$ are frequently use to specify $\alpha$.
+%
+% <<comment = NA>>=
+% 1/eigen(A)$values[1]
+% @
+
+\item Here is $\alpha ( = 1)$ times the transpose of the adjacency matrix.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{alpha} \hlopt{*} \hlkwd{t}\hldef{(A)}
+\end{alltt}
+\begin{verbatim}
+  4 3 2 1
+4 0 0 0 0
+3 1 0 0 0
+2 0 1 0 0
+1 0 0 1 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\item And here is $\boldsymbol{I} - \alpha \boldsymbol{A^T}$
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{I} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{0}\hldef{,}\hlnum{4}\hldef{,}\hlnum{4}\hldef{);} \hlkwd{diag}\hldef{(I)} \hlkwb{<-} \hlnum{1}
+\hldef{I} \hlopt{-} \hldef{(alpha} \hlopt{*} \hlkwd{t}\hldef{(A))}
+\end{alltt}
+\begin{verbatim}
+   4  3  2 1
+4  1  0  0 0
+3 -1  1  0 0
+2  0 -1  1 0
+1  0  0 -1 1
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\item Let $\boldsymbol{B} = \boldsymbol{I} - \alpha \boldsymbol{A^T}$, then $\boldsymbol{B}^{-1}$ will also be an $n \times n$ matrix, whose rows now represent paths associated with a particular node (along with an additional one on the diagonal, representing the "free centrality" assigned to each node).
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{B} \hlkwb{<-} \hldef{I} \hlopt{-} \hldef{(alpha} \hlopt{*} \hlkwd{t}\hldef{(A))}
+\hlkwd{solve}\hldef{(B)}
+\end{alltt}
+\begin{verbatim}
+  4 3 2 1
+4 1 0 0 0
+3 1 1 0 0
+2 1 1 1 0
+1 1 1 1 1
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\item $\boldsymbol{B}^{-1} \cdot \boldsymbol{1}$ results in a $n \times 1$ column vector comprised of the row sums of $\boldsymbol{B}^{-1}$. These are the alpha centralities for each node.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{one} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{4}\hldef{,}\hlnum{1}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{rep}\hldef{(}\hlnum{1}\hldef{,}\hlnum{4}\hldef{))}
+\hlkwd{solve}\hldef{(B)} \hlopt{%*%} \hldef{one}
+\end{alltt}
+\begin{verbatim}
+  [,1]
+4    1
+3    2
+2    3
+1    4
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{itemize}
+
+\subsection{The Effect of $\alpha$}
+Assume that we wish to obtain alpha-centralities for the simple DAG in Fig \ref{fig:simp1}, but wish to use $\alpha = 0.5$.
+\begin{itemize}
+\item We have:
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{as_adjacency_matrix}\hldef{(G,} \hlkwc{sparse} \hldef{= F)}
+\hldef{alpha} \hlkwb{<-} \hlnum{0.5}
+\hldef{alpha} \hlopt{*} \hlkwd{t}\hldef{(A)}
+\end{alltt}
+\begin{verbatim}
+    4   3   2 1
+4 0.0 0.0 0.0 0
+3 0.5 0.0 0.0 0
+2 0.0 0.5 0.0 0
+1 0.0 0.0 0.5 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\item Subtracting this product from $\boldsymbol{I}$ results in:
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{I} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{0}\hldef{,}\hlnum{4}\hldef{,}\hlnum{4}\hldef{);} \hlkwd{diag}\hldef{(I)} \hlkwb{<-} \hlnum{1}
+\hldef{B} \hlkwb{<-} \hldef{I} \hlopt{-} \hldef{alpha} \hlopt{*} \hlkwd{t}\hldef{(A)}
+\hldef{B}
+\end{alltt}
+\begin{verbatim}
+     4    3    2 1
+4  1.0  0.0  0.0 0
+3 -0.5  1.0  0.0 0
+2  0.0 -0.5  1.0 0
+1  0.0  0.0 -0.5 1
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\item And the inverse of $\boldsymbol{B}$ is:
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{solve}\hldef{(B)}
+\end{alltt}
+\begin{verbatim}
+      4    3   2 1
+4 1.000 0.00 0.0 0
+3 0.500 1.00 0.0 0
+2 0.250 0.50 1.0 0
+1 0.125 0.25 0.5 1
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\item As before, the row sums of $\boldsymbol{B}^{-1}$ give the alpha-centralities.\\
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{solve}\hldef{(B)} \hlopt{%*%} \hlkwd{rep}\hldef{(}\hlnum{1}\hldef{,}\hlnum{4}\hldef{)}
+\end{alltt}
+\begin{verbatim}
+   [,1]
+4 1.000
+3 1.500
+2 1.750
+1 1.875
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+
+\end{itemize}
+
+It is clear that for a DAG with order $n$, and no branching (no joins or splits), we will have the following matrix framework for $\boldsymbol{B}^{-1}$
+
+\begin{equation}
+\underset{(n \times n)}{\boldsymbol{B}^{-1}} = (\boldsymbol{I} - \alpha \boldsymbol{A^T})^{-1} =
+\begin{bmatrix}
+1.0 & 0 & 0 & 0 & 0 & \cdots & 0 \\
+\alpha & 1.0 & 0 & 0 & 0 & \cdots & 0 \\
+\alpha^2 & \alpha & 1.0 & 0 & 0 & \cdots & 0 \\
+\alpha^3 & \alpha^2 & \alpha & 1.0 & 0 &  \cdots & 0 \\
+\alpha^4 & \alpha^3 & \alpha^2 & \alpha & 1.0 &  \cdots & 0 \\
+\vdots & \vdots & \vdots & \vdots & \vdots &  \ddots &  \vdots \\
+\alpha^{n-1} & \alpha^{n-2} & \alpha^{n-3} & \alpha^{n-4} & \alpha^{n-5} & \cdots & 1.0
+\end{bmatrix}
+\label{eq:alpha}
+\end{equation}
+
+Thus, paths given in the off-diagonal elements of $\boldsymbol{B}^{-1}$ are weighted by $\alpha$ raised to the power of the path length.
+\begin{itemize}
+\item For $\alpha \in (0,1]$, longer paths will have less influence when calculating alpha-centrality for a node. A path with maximum length ($n-1$) will have minimum weight, $\alpha^{n-1}$, whereas a path with minimum length, 1, will have maximum weight $\alpha$. For this reason $\alpha$ has been called a decay parameter.
+\item Specifying $\alpha = 1$ will cause $\alpha$ to drop out of Eq. \ref{eq:katz}, and all paths will have the same $\alpha$ (non-)weighting, regardless of length.
+% \item For $\alpha > 1$ (not recommended, since it prevents a ), longer paths will have more influence than shorter paths.
+\end{itemize}
+
+\subsection{The Effect of Branching}
+\label{sec:branch}
+Lets now consider the effect of network branching on alpha-centrality using a graph with a join (Fig \ref{fig:simp2}A), and a graph with a split and join (an island) (Fig \ref{fig:simp2}B).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.6\textwidth]{simo1_DAG.pdf}
+\caption{Simple branched DAGs.}
+\label{fig:simp2}
+\end{figure}
+
+\begin{itemize}
+\item We have:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{graph_A} \hlkwb{<-} \hlkwd{graph_from_literal}\hldef{(}\hlnum{7} \hlopt{--+} \hlnum{6} \hlopt{--+} \hlnum{5} \hlopt{--+} \hlnum{3}\hldef{,}
+                              \hlnum{4} \hlopt{--+} \hlnum{3}\hldef{,} \hlnum{3}\hlopt{--+} \hlnum{2}\hldef{,} \hlnum{2}\hlopt{--+} \hlnum{1}\hldef{)}
+\hldef{graph_B} \hlkwb{<-} \hlkwd{graph_from_literal}\hldef{(}\hlnum{7} \hlopt{--+} \hlnum{6} \hlopt{--+} \hlnum{5}\hldef{,} \hlnum{6} \hlopt{--+} \hlnum{4}\hldef{,}
+                              \hlnum{5} \hlopt{--+} \hlnum{3}\hldef{,} \hlnum{4} \hlopt{--+} \hlnum{3}\hldef{,} \hlnum{3}\hlopt{--+} \hlnum{2}\hldef{,} \hlnum{2}\hlopt{--+} \hlnum{1}\hldef{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\item The adjacency matrices are:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A_A} \hlkwb{<-} \hlkwd{as_adjacency_matrix}\hldef{(graph_A,} \hlkwc{sparse} \hldef{= F)}
+\hldef{A_A}
+\end{alltt}
+\begin{verbatim}
+  7 6 5 3 4 2 1
+7 0 1 0 0 0 0 0
+6 0 0 1 0 0 0 0
+5 0 0 0 1 0 0 0
+3 0 0 0 0 0 1 0
+4 0 0 0 1 0 0 0
+2 0 0 0 0 0 0 1
+1 0 0 0 0 0 0 0
+\end{verbatim}
+\begin{alltt}
+\hldef{A_B} \hlkwb{<-} \hlkwd{as_adjacency_matrix}\hldef{(graph_B,} \hlkwc{sparse} \hldef{= F)}
+\hldef{A_B}
+\end{alltt}
+\begin{verbatim}
+  7 6 5 4 3 2 1
+7 0 1 0 0 0 0 0
+6 0 0 1 1 0 0 0
+5 0 0 0 0 1 0 0
+4 0 0 0 0 1 0 0
+3 0 0 0 0 0 1 0
+2 0 0 0 0 0 0 1
+1 0 0 0 0 0 0 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Note that joins show up as multiple ones in adjacency matrix columns (see column for node 3 in \texttt{A\_A}) and splits appear as multiple ones in rows (see row for node 6 in \texttt{A\_B}).
+
+\item Letting $\alpha = 1$, we find $\boldsymbol{I} - \alpha \boldsymbol{A^T}$
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{alpha} \hlkwb{<-} \hlnum{1}
+\hldef{I} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{0}\hldef{,}\hlnum{7}\hldef{,}\hlnum{7}\hldef{);} \hlkwd{diag}\hldef{(I)} \hlkwb{<-} \hlnum{1}
+\hldef{I} \hlopt{-} \hldef{(alpha} \hlopt{*} \hlkwd{t}\hldef{(A_A))}
+\end{alltt}
+\begin{verbatim}
+   7  6  5  3  4  2 1
+7  1  0  0  0  0  0 0
+6 -1  1  0  0  0  0 0
+5  0 -1  1  0  0  0 0
+3  0  0 -1  1 -1  0 0
+4  0  0  0  0  1  0 0
+2  0  0  0 -1  0  1 0
+1  0  0  0  0  0 -1 1
+\end{verbatim}
+\begin{alltt}
+\hldef{I} \hlopt{-} \hldef{(alpha} \hlopt{*} \hlkwd{t}\hldef{(A_B))}
+\end{alltt}
+\begin{verbatim}
+   7  6  5  4  3  2 1
+7  1  0  0  0  0  0 0
+6 -1  1  0  0  0  0 0
+5  0 -1  1  0  0  0 0
+4  0 -1  0  1  0  0 0
+3  0  0 -1 -1  1  0 0
+2  0  0  0  0 -1  1 0
+1  0  0  0  0  0 -1 1
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+And $\boldsymbol{B}^{-1}$ where $\boldsymbol{B} = \boldsymbol{I} - \alpha \boldsymbol{A^T}$.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{B_A} \hlkwb{<-} \hldef{I} \hlopt{-} \hldef{alpha} \hlopt{*} \hlkwd{t}\hldef{(A_A)}
+\hlkwd{solve}\hldef{(B_A)}
+\end{alltt}
+\begin{verbatim}
+  7 6 5 3 4 2 1
+7 1 0 0 0 0 0 0
+6 1 1 0 0 0 0 0
+5 1 1 1 0 0 0 0
+3 1 1 1 1 1 0 0
+4 0 0 0 0 1 0 0
+2 1 1 1 1 1 1 0
+1 1 1 1 1 1 1 1
+\end{verbatim}
+\begin{alltt}
+\hldef{B_B} \hlkwb{<-} \hldef{I} \hlopt{-} \hldef{alpha} \hlopt{*} \hlkwd{t}\hldef{(A_B)}
+\hlkwd{solve}\hldef{(B_B)}
+\end{alltt}
+\begin{verbatim}
+  7 6 5 4 3 2 1
+7 1 0 0 0 0 0 0
+6 1 1 0 0 0 0 0
+5 1 1 1 0 0 0 0
+4 1 1 0 1 0 0 0
+3 2 2 1 1 1 0 0
+2 2 2 1 1 1 1 0
+1 2 2 1 1 1 1 1
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+Note that there are \textit{no} paths to node 4 from nodes 7, 6, 5, and 3 in graph A, and that there are two paths to nodes 1, 2, and 3 from nodes 7, 6, 5 in graph B.
+
+\item As before, row sums of $\boldsymbol{B}^{-1}$ provide alpha-centralities.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{solve}\hldef{(B_A)} \hlopt{%*%} \hlkwd{rep}\hldef{(}\hlnum{1}\hldef{,} \hlnum{7}\hldef{)}
+\end{alltt}
+\begin{verbatim}
+  [,1]
+7    1
+6    2
+5    3
+3    5
+4    1
+2    6
+1    7
+\end{verbatim}
+\begin{alltt}
+\hlkwd{solve}\hldef{(B_B)} \hlopt{%*%} \hlkwd{rep}\hldef{(}\hlnum{1}\hldef{,} \hlnum{7}\hldef{)}
+\end{alltt}
+\begin{verbatim}
+  [,1]
+7    1
+6    2
+5    3
+4    3
+3    7
+2    8
+1    9
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{itemize}
+
+
+\subsection{The Combined Effect of $\alpha$ \textit{and} Branching}
+\label{sec:both}
+We now consider the interplay of $\alpha$ and branching:
+
+\begin{itemize}
+\item In particular, we let $\alpha = 0.5$ and calculate alpha-centralities for the graphs in Fig \ref{fig:simp2}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{alpha} \hlkwb{<-} \hlnum{0.5}
+\hldef{I} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{0}\hldef{,}\hlnum{7}\hldef{,}\hlnum{7}\hldef{);} \hlkwd{diag}\hldef{(I)} \hlkwb{<-} \hlnum{1}
+\hldef{B_A} \hlkwb{<-} \hldef{I} \hlopt{-} \hldef{(alpha} \hlopt{*} \hlkwd{t}\hldef{(A_A))}
+\hldef{B_B} \hlkwb{<-} \hldef{I} \hlopt{-} \hldef{(alpha} \hlopt{*} \hlkwd{t}\hldef{(A_B))}
+
+\hlkwd{solve}\hldef{(B_A)}
+\end{alltt}
+\begin{verbatim}
+        7      6     5    3     4   2 1
+7 1.00000 0.0000 0.000 0.00 0.000 0.0 0
+6 0.50000 1.0000 0.000 0.00 0.000 0.0 0
+5 0.25000 0.5000 1.000 0.00 0.000 0.0 0
+3 0.12500 0.2500 0.500 1.00 0.500 0.0 0
+4 0.00000 0.0000 0.000 0.00 1.000 0.0 0
+2 0.06250 0.1250 0.250 0.50 0.250 1.0 0
+1 0.03125 0.0625 0.125 0.25 0.125 0.5 1
+\end{verbatim}
+\begin{alltt}
+\hlkwd{solve}\hldef{(B_B)}
+\end{alltt}
+\begin{verbatim}
+       7     6     5     4    3   2 1
+7 1.0000 0.000 0.000 0.000 0.00 0.0 0
+6 0.5000 1.000 0.000 0.000 0.00 0.0 0
+5 0.2500 0.500 1.000 0.000 0.00 0.0 0
+4 0.2500 0.500 0.000 1.000 0.00 0.0 0
+3 0.2500 0.500 0.500 0.500 1.00 0.0 0
+2 0.1250 0.250 0.250 0.250 0.50 1.0 0
+1 0.0625 0.125 0.125 0.125 0.25 0.5 1
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\item A resemblance to the basic unbranched framework for $\boldsymbol{B}^{-1}$ shown in Eq. \ref{eq:alpha} remains, although it is now more difficult to discern. For instance, in graph A the path from node 7 to node 2 has length 4 (Fig \ref{fig:simp2}A), so it is given weight $\alpha^4 = 0.5^4 = 0.0625$ in the $\boldsymbol{B}^{-1}$ matrix for graph A (intersection of row 6 and column 1). There is no path between nodes 7 and 4 in graph A, so this path is given weight 0 in the $\boldsymbol{B}^{-1}$ matrix for graph A (intersection of row 5 and column 1). In graph B there are two ways to get from node 7 to node 2, and both of these have length 4 (Fig \ref{fig:simp2}B). Thus, the resulting weight for this connection is $2 \cdot 0.5^4 = 0.125$ in the $\boldsymbol{B}^{-1}$ matrix for graph B (intersection of row 6 and column 1). Likewise, there are two paths from node 7 to node 1 and both of these have length 5, so we have the weight $2 \cdot 0.5^5 = 0.0625$ for this path (intersection of row 7 and column 1).
+\end{itemize}
+
+\subsection{Interpreting Alpha-centrality in Stream DAGs}
+\subsubsection{Unweighted DAGs}
+As additional unweighted graph examples, consider the stream DAGs in Fig \ref{fig:f1}. The relationship between the alpha-centrality (for three different values of $\alpha$), the number of paths, and upstream network order for the outlet node (i.e., node 1) for each of the DAGs shown in Fig \ref{fig:f1}, is given in Table \ref{tab:gams}.
+
+Note that in the special (but frequently observed) case that a graph is unweighted, and $\alpha = 1$, alpha centrality will be the number of paths to a node, plus 1 (Table \ref{tab:gams}). Thus a reasonable modification to Eq. \ref{eq:katz} would be:
+
+\begin{equation}
+\begin{aligned}
+% \boldsymbol{x} = \left(\boldsymbol{I} - \alpha\boldsymbol{A^{T}}\right)^{-1} \cdot \boldsymbol{1} -1 & \text{or,}\\
+\boldsymbol{x_1} = \left(\boldsymbol{I} - \alpha\boldsymbol{A^{T}}\right)^{-1} \cdot \boldsymbol{1} -1 & \text{,  \hspace{0.1in} or}\\
+\boldsymbol{x_1} = \left\{\left(\boldsymbol{I} - \alpha\boldsymbol{A^{T}}\right)^{-1} - \boldsymbol{I}\right\}\cdot \boldsymbol{1} &
+% \boldsymbol{x} = \left{\left(\boldsymbol{I} - \alpha\boldsymbol{A^{T}}\right)^{-1} - \boldsymbol{I}\right} \cdot \boldsymbol{1} -1 & \\
+\end{aligned}
+\label{eq:katz1}
+\end{equation}
+
+As shown in Section \ref{sec:branch} and \ref{sec:both}, network splits followed by joins (resulting from islands) increase the number of paths to the outlet. For a stream DAG in the absence of conjoined splits and joins, the alpha-centrality of a stream DAG node will also be the order (the number of nodes) in the intact network upstream, plus one.
+
+Also apparent in Table \ref{tab:gams} is the effect of varying the $\alpha$ parameter in Eq. \ref{eq:katz}. Note that as $\alpha$ goes toward zero, the alpha-centrality of the outlet node decreases (it approaches the free centrality of 1 given to \textit{all} nodes) because, even though the outlets will have more paths than any other node, longer paths associated with the outlet are down-weighted.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{DAGs.pdf}
+\caption{Example stream DAGs. Note that the outlet node has the label 1 in each DAG.}
+\label{fig:f1}
+\end{figure}
+
+
+
+
+
+
+\begin{table}[h!]
+\centering
+\caption{Summary of outlet nodes (node 1) for DAGs in Fig \ref{fig:f1}. Alpha centralities calculated using $\alpha = 1$, $\alpha = 0.75$, and $\alpha = 0.5$.}
+\label{tab:gams}
+\begin{tabular}{ccccccc}
+  \hline
+Graph & \multicolumn{3}{c}{Alpha-centrality}              & Paths & Order \\
+      & $\alpha = 0.5$ & $\alpha = 0.75$ & $\alpha = 1.0$ &       &       \\   \hline
+
+A & 1.50 & 1.75 & 2.00 & 1.00 & 1.00 \\
+  B & 1.75 & 2.31 & 3.00 & 2.00 & 2.00 \\
+  C & 2.00 & 3.16 & 5.00 & 4.00 & 4.00 \\
+  D & 2.44 & 4.46 & 8.00 & 7.00 & 7.00 \\
+  E & 2.50 & 4.77 & 9.00 & 8.00 & 8.00 \\
+  F & 3.00 & 5.52 & 10.00 & 9.00 & 9.00 \\
+  G & 2.25 & 4.21 & 8.00 & 7.00 & 7.00 \\
+  H & 2.31 & 4.69 & 10.00 & 9.00 & 8.00 \\
+  I & 2.34 & 5.04 & 12.00 & 11.00 & 9.00 \\
+   \hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Weighted DAGs}
+In addition to modifying $\alpha$ which (if $\alpha \in (0,1]$) will diminish the importance of a path as a function of its length, numerical information can be added to stream DAG arcs, reflecting specific arc characteristics (e.g., flow rates, instream lengths). The result is a \textbf{weighted graph}.\\
+
+From the perspective of alpha-centrality, weighting modifies the adjacency matrix $\boldsymbol{A}$ in Eq. \ref{eq:katz}, so that weights occur at cells representing connecting arcs, instead of ones.\\
+
+As a relatively complex weighted example, consider the intermittent stream DAG in Fig \ref{fig:f2}, with 19 nodes and 18 arcs. Here, arcs are weighted by the probability of surface water at that arc (numbers above arcs).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Fig_1_alpha.png}
+\caption{Example stream DAG. Numbers above arcs are probabilities of segment presence.}
+\label{fig:f2}
+\end{figure}
+
+\begin{itemize}
+\item As before, we define define the graph using \textit{igraph} scripts.
+\begin{small}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{G} \hlkwb{<-} \hlkwd{graph_from_literal}\hldef{(a} \hlopt{--+} \hldef{c, c} \hlopt{--+} \hldef{e, e} \hlopt{--+} \hldef{f, f} \hlopt{--+} \hldef{p,}
+                        \hldef{p} \hlopt{--+} \hldef{q, q} \hlopt{--+} \hldef{r,}
+                        \hldef{b} \hlopt{--+} \hldef{d, d} \hlopt{--+} \hldef{e,}
+                        \hldef{g} \hlopt{--+} \hldef{i, i} \hlopt{--+} \hldef{j, i} \hlopt{--+} \hldef{k, k} \hlopt{--+} \hldef{m,}
+                        \hldef{j} \hlopt{--+} \hldef{m, m} \hlopt{--+} \hldef{n,  n}\hlopt{--+} \hldef{o, o} \hlopt{--+} \hldef{p,}
+                        \hldef{h} \hlopt{--+} \hldef{l, l} \hlopt{--+} \hldef{n)}
+
+\hldef{weight.matrix} \hlkwb{<-} \hlkwd{data.frame}\hldef{(}\hlkwd{matrix}\hldef{(}\hlkwc{ncol} \hldef{=} \hlnum{2}\hldef{,} \hlkwc{nrow} \hldef{=} \hlnum{18}\hldef{,} \hlkwc{data} \hldef{=} \hlkwd{c}\hldef{(}
+  \hlsng{"a->c"}\hldef{,} \hlnum{0.2}\hldef{,} \hlsng{"c->e"}\hldef{,} \hlnum{0.2}\hldef{,} \hlsng{"e->f"}\hldef{,} \hlnum{0.2}\hldef{,}  \hlsng{"f->p"}\hldef{,} \hlnum{0.5}\hldef{,}  \hlsng{"p->q"}\hldef{,} \hlnum{0.7}\hldef{,}
+  \hlsng{"q->r"}\hldef{,} \hlnum{0.9}\hldef{,} \hlsng{"b->d"}\hldef{,} \hlnum{0.1}\hldef{,} \hlsng{"d->e"}\hldef{,} \hlnum{0.3}\hldef{,}  \hlsng{"g->i"}\hldef{,} \hlnum{0.2}\hldef{,}  \hlsng{"i->j"}\hldef{,} \hlnum{0.1}\hldef{,}
+  \hlsng{"i->k"}\hldef{,} \hlnum{0.6}\hldef{,} \hlsng{"j->m"}\hldef{,} \hlnum{0.5}\hldef{,} \hlsng{"k->m"}\hldef{,} \hlnum{0.5}\hldef{,}  \hlsng{"m->n"}\hldef{,} \hlnum{0.4}\hldef{,}  \hlsng{"n->o"}\hldef{,} \hlnum{0.3}\hldef{,}
+  \hlsng{"o->p"}\hldef{,} \hlnum{0.2}\hldef{,}  \hlsng{"h->l"}\hldef{,} \hlnum{0.1}\hldef{,} \hlsng{"l->n"}\hldef{,} \hlnum{0.3}\hldef{),} \hlkwc{byrow} \hldef{= T))}
+
+\hlkwd{names}\hldef{(weight.matrix)} \hlkwb{<-} \hlkwd{c}\hldef{(}\hlsng{"Arc"}\hldef{,} \hlsng{"Weight"}\hldef{)}
+\hldef{weight.matrix}\hlopt{$}\hlsng{"Weight"} \hlkwb{<-} \hlkwd{as.numeric}\hldef{(weight.matrix}\hlopt{$}\hlsng{"Weight"}\hldef{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+\end{small}
+\item We will let $\alpha = 1$.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{alpha} \hlkwb{<-} \hlnum{1}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\item Here is the adjacency matrix.
+\begin{small}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{A} \hlkwb{<-} \hlkwd{as_adjacency_matrix}\hldef{(G,} \hlkwc{sparse} \hldef{= F)}
+\hldef{A}
+\end{alltt}
+\begin{verbatim}
+  a c e f p q r b d g i j k m n o h l
+a 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+c 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+e 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+f 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+p 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0
+q 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0
+r 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+b 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0
+d 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+g 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0
+i 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0 0
+j 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0
+k 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0
+m 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0
+n 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0
+o 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0
+h 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1
+l 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{small}
+\item To set graph weights I use:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{W} \hlkwb{<-} \hldef{G}
+\hldef{weights} \hlkwb{<-} \hldef{weight.matrix[,}\hlnum{2}\hldef{]}
+
+\hldef{W} \hlkwb{<-} \hlkwd{set_edge_attr}\hldef{(W,} \hlsng{"weight"}\hldef{,} \hlkwc{value} \hldef{=} \hlkwd{as.numeric}\hldef{(weights))}
+\hldef{attr} \hlkwb{<-} \hlsng{"weight"}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\item Note that weighting graph arcs has radically changed the form of the adjacency matrix, now termed $\boldsymbol{D}$. Specifically, weights are now listed at connecting arc locations, instead of ones.
+\begin{footnotesize}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{D} \hlkwb{<-} \hlkwd{as_adjacency_matrix}\hldef{(W,} \hlkwc{attr} \hldef{= attr,} \hlkwc{sparse} \hldef{=} \hlnum{FALSE}\hldef{)}
+\hldef{D}
+\end{alltt}
+\begin{verbatim}
+  a   c   e   f   p   q   r b   d g   i   j   k   m   n   o h   l
+a 0 0.2 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+c 0 0.0 0.2 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+e 0 0.0 0.0 0.2 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+f 0 0.0 0.0 0.0 0.5 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+p 0 0.0 0.0 0.0 0.0 0.7 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+q 0 0.0 0.0 0.0 0.0 0.0 0.9 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+r 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+b 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.1 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+d 0 0.0 0.3 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+g 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.2 0.0 0.0 0.0 0.0 0.0 0 0.0
+i 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.1 0.6 0.0 0.0 0.0 0 0.0
+j 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.5 0.0 0.0 0 0.0
+k 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.5 0.0 0.0 0 0.0
+m 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.4 0.0 0 0.0
+n 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.3 0 0.0
+o 0 0.0 0.0 0.0 0.2 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0
+h 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.1
+l 0 0.0 0.0 0.0 0.0 0.0 0.0 0 0.0 0 0.0 0.0 0.0 0.0 0.3 0.0 0 0.0
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{footnotesize}
+\item Here I calculate $\boldsymbol{B} = \boldsymbol{I} - \alpha \boldsymbol{D^T}$
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hldef{I} \hlkwb{<-} \hlkwd{matrix}\hldef{(}\hlnum{0}\hldef{,} \hlkwc{nrow} \hldef{=} \hlkwd{nrow}\hldef{(D),} \hlkwc{ncol} \hldef{=} \hlkwd{ncol}\hldef{(D));} \hlkwd{diag}\hldef{(I)} \hlkwb{<-} \hlnum{1}
+\hldef{B} \hlkwb{<-} \hldef{I} \hlopt{-} \hldef{alpha} \hlopt{*} \hlkwd{t}\hldef{(D)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\item And here is $\boldsymbol{B}^{-1}$
+\begin{footnotesize}
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{solve}\hldef{(B)}
+\end{alltt}
+\begin{verbatim}
+        a      c     e     f    p   q r       b      d         g        i
+a 1.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0000000 0.000000
+c 0.20000 1.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0000000 0.000000
+e 0.04000 0.2000 1.000 0.000 0.00 0.0 0 0.03000 0.3000 0.0000000 0.000000
+f 0.00800 0.0400 0.200 1.000 0.00 0.0 0 0.00600 0.0600 0.0000000 0.000000
+p 0.00400 0.0200 0.100 0.500 1.00 0.0 0 0.00300 0.0300 0.0016800 0.008400
+q 0.00280 0.0140 0.070 0.350 0.70 1.0 0 0.00210 0.0210 0.0011760 0.005880
+r 0.00252 0.0126 0.063 0.315 0.63 0.9 1 0.00189 0.0189 0.0010584 0.005292
+b 0.00000 0.0000 0.000 0.000 0.00 0.0 0 1.00000 0.0000 0.0000000 0.000000
+d 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.10000 1.0000 0.0000000 0.000000
+g 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 1.0000000 0.000000
+i 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.2000000 1.000000
+j 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0200000 0.100000
+k 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.1200000 0.600000
+m 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0700000 0.350000
+n 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0280000 0.140000
+o 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0084000 0.042000
+h 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0000000 0.000000
+l 0.00000 0.0000 0.000 0.000 0.00 0.0 0 0.00000 0.0000 0.0000000 0.000000
+        j       k       m      n     o        h       l
+a 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+c 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+e 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+f 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+p 0.01200 0.01200 0.02400 0.0600 0.200 0.001800 0.01800
+q 0.00840 0.00840 0.01680 0.0420 0.140 0.001260 0.01260
+r 0.00756 0.00756 0.01512 0.0378 0.126 0.001134 0.01134
+b 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+d 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+g 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+i 0.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+j 1.00000 0.00000 0.00000 0.0000 0.000 0.000000 0.00000
+k 0.00000 1.00000 0.00000 0.0000 0.000 0.000000 0.00000
+m 0.50000 0.50000 1.00000 0.0000 0.000 0.000000 0.00000
+n 0.20000 0.20000 0.40000 1.0000 0.000 0.030000 0.30000
+o 0.06000 0.06000 0.12000 0.3000 1.000 0.009000 0.09000
+h 0.00000 0.00000 0.00000 0.0000 0.000 1.000000 0.00000
+l 0.00000 0.00000 0.00000 0.0000 0.000 0.100000 1.00000
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+\end{footnotesize}
+
+\item As before, the row sums of $\boldsymbol{B}^{-1}$ give the alpha-centralities.\\
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{solve}\hldef{(B)} \hlopt{%*%} \hlkwd{rep}\hldef{(}\hlnum{1}\hldef{,}\hlkwd{nrow}\hldef{(D))}
+\end{alltt}
+\begin{verbatim}
+      [,1]
+a 1.000000
+c 1.200000
+e 1.570000
+f 1.314000
+p 1.994880
+q 2.396416
+r 3.156774
+b 1.000000
+d 1.100000
+g 1.000000
+i 1.200000
+j 1.120000
+k 1.720000
+m 2.420000
+n 2.298000
+o 1.689400
+h 1.000000
+l 1.100000
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+\end{itemize}
+
+It is possible to trace entries in $\boldsymbol{B}^{-1}$ (in the previous \textbf{R} output) to the graphical representation in Fig \ref{fig:f2}. For example,
+the arc $\overrightarrow{ac}$ has path length 1, and so the weight (probability of stream presence) for this arc, 0.2 (Fig \ref{fig:f2}), is given directly in $\boldsymbol{B}^{-1}$ (intersection of row \textit{c} and column \textit{a}). The path $\overrightarrow{ace}$ is comprised of two vectors, $\overrightarrow{ac}$ and $\overrightarrow{ae}$, and each of these has weight 0.2 (Fig \ref{fig:f2}). Thus, the weight given to the path $\overrightarrow{ace}$ is $0.2 \times 0.2 = 0.04$ (intersection of row \textit{e} and column \textit{a}). As a more complex example, there are two paths from node $g$ to node $n$: ${g,i,j,m,n}$ and $\{g,i,k,m,n\}$ (Fig \ref{fig:f2}). The accumulated weights for these paths are: $0.2 \cdot 0.1 \cdot 0.1 \cdot 0.4 = 0.0008$ and $0.2 \cdot 0.6 \cdot 0.5 \cdot 0.4 = 0.024$ (Fig \ref{fig:f2}). Thus, the weight reported in $\boldsymbol{B}^{-1}$ for the connection between $g$ and $n$, is $0.0008 + 0.0248 = 0.0248$ (intersection of row \textit{n} and column \textit{g}).
+
+Clearly, even though the $\alpha$ parameter is being dropped here by letting it equal one, the effect of path length is still be being expressed in the path weights given in $\boldsymbol{B}^{-1}$. Specifically, if weights are in $(0,1]$ paths of greater length will be increasingly down-weighted in the calculation of alpha-centrality, and will be further decreased if one specifies $\alpha \in (0,1]$, because the initial weights will be multiplied by a proportion. Conversely, if weights are greater than one, longer path lengths will be exponentially up-weighted/emphasized when calculating alpha-centrality!!
+
+\bibliography{book.bib}
+\bibliographystyle{MMEbst}
+
+\end{document}
